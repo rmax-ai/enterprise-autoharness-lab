@@ -6,13 +6,12 @@ No framework dependencies. No I/O. Pure data contracts.
 
 from __future__ import annotations
 
-from datetime import datetime, UTC
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
 
-
 # ── Action ───────────────────────────────────────────────────────────
+
 
 class Action(BaseModel):
     """An action proposed by an agent for execution in an environment."""
@@ -48,6 +47,7 @@ class ExecutionResult(BaseModel):
 
 # ── Harness ──────────────────────────────────────────────────────────
 
+
 class HarnessDecision(BaseModel):
     """Decision from the synthesized harness about an action's validity."""
 
@@ -60,6 +60,7 @@ class HarnessDecision(BaseModel):
 
 
 # ── Policy ────────────────────────────────────────────────────────────
+
 
 class PolicyDecision(BaseModel):
     """Authoritative decision from the policy engine.
@@ -76,6 +77,7 @@ class PolicyDecision(BaseModel):
 
 
 # ── Attempt Record ────────────────────────────────────────────────────
+
 
 class AttemptRecord(BaseModel):
     """A single execution step trace."""
@@ -96,6 +98,7 @@ class AttemptRecord(BaseModel):
 
 
 # ── Counterexample ────────────────────────────────────────────────────
+
 
 class Counterexample(BaseModel):
     """A structured failure used to refine the harness."""
@@ -127,6 +130,7 @@ FailureClass = Literal[
 
 # ── Scenario ──────────────────────────────────────────────────────────
 
+
 class Scenario(BaseModel):
     """A test scenario for evaluation."""
 
@@ -142,6 +146,7 @@ class Scenario(BaseModel):
 
 
 # ── Harness Artifact ──────────────────────────────────────────────────
+
 
 class HarnessArtifact(BaseModel):
     """Metadata for a stored harness version."""
@@ -164,6 +169,7 @@ class HarnessArtifact(BaseModel):
 
 
 # ── Environment Protocol ──────────────────────────────────────────────
+
 
 class Environment(Protocol):
     """Protocol for workflow environments.
@@ -199,6 +205,7 @@ class Environment(Protocol):
 
 # ── Agent Protocol ────────────────────────────────────────────────────
 
+
 class Agent(Protocol):
     """Protocol for agents that propose actions."""
 
@@ -216,6 +223,7 @@ class Agent(Protocol):
 
 # ── Model Client Protocol ─────────────────────────────────────────────
 
+
 class ModelClient(Protocol):
     """Provider-agnostic LLM client protocol."""
 
@@ -231,6 +239,7 @@ class ModelClient(Protocol):
 
 # ── Harness Contract (Protocol) ──────────────────────────────────────
 
+
 class HarnessContract(Protocol):
     """Protocol that generated harness code must satisfy."""
 
@@ -239,7 +248,7 @@ class HarnessContract(Protocol):
         observation: dict[str, Any],
         proposed_action: dict[str, Any],
     ) -> dict[str, Any]:
-        """Return {"accepted": bool, "normalized_action": dict|None, "reason": str, "confidence": float|None}."""
+        """Return {accepted, normalized_action, reason, confidence} dict."""
         ...
 
     def repair_action(
@@ -267,6 +276,7 @@ HarnessLifecycleState = Literal[
 
 # ── Experiment Config ─────────────────────────────────────────────────
 
+
 class ExperimentConfig(BaseModel):
     """Configuration for a single experiment run."""
 
@@ -283,6 +293,7 @@ class ExperimentConfig(BaseModel):
 
 
 # ── Mutation Spec ─────────────────────────────────────────────────────
+
 
 class MutationSpec(BaseModel):
     """Description of an environment mutation."""
