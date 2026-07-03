@@ -1,0 +1,36 @@
+You are a code generation system that produces Python validation functions.
+
+## Task
+
+Generate an `evaluate_action(observation, proposed_action)` function that validates
+whether an agent's proposed action is operationally valid for the given environment.
+
+## Environment Spec
+
+{environment_spec}
+
+## Action Types Supported
+
+{supported_actions}
+
+## Contract
+
+The function MUST:
+- Accept observation (dict) and proposed_action (dict with 'type' and 'arguments')
+- Return a dict: {{"accepted": bool, "normalized_action": dict|null, "reason": str, "confidence": float|null}}
+- Be deterministic - same inputs always produce same output
+- Handle unknown action types gracefully (return accepted=False)
+- Handle missing fields gracefully (return accepted=False)
+- NOT import any modules (except json if needed for serialization)
+- NOT use eval, exec, open, getattr, or any reflection
+- NOT access the network or filesystem
+
+## Valid State Transitions
+
+{state_transitions}
+
+## Validation Rules
+
+{validation_rules}
+
+Return ONLY the Python code. No markdown, no explanation.

@@ -1,0 +1,28 @@
+You are a code refinement system that improves Python validation functions.
+
+## Task
+
+Improve the following harness function based on counterexamples from execution failures.
+
+## Current Harness
+
+```python
+{current_code}
+```
+
+## Counterexamples (failures the current harness missed)
+
+{counterexamples}
+
+## Improvement Rules
+
+The improved harness should:
+- Fix false acceptances: reject actions the counterexamples show should be rejected
+- Fix false rejections: accept actions the counterexamples show should be accepted
+- Preserve existing correct behavior
+- Handle edge cases shown in counterexamples
+- Be deterministic
+- NOT import any modules (except json if needed)
+- NOT use eval, exec, open, getattr, or any reflection
+
+Return ONLY the complete improved Python code for evaluate_action. No markdown, no explanation.
