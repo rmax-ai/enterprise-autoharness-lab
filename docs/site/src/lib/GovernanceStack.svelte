@@ -40,12 +40,13 @@
   .stack {
     position: relative;
     max-width: 760px;
-    height: 400px;
+    min-height: 400px;
     margin: 0 auto;
     display: grid;
-    grid-template-rows: 1fr 24px 1fr 24px 0.9fr;
+    grid-template-rows: auto 24px auto 24px auto;
     gap: 0.5rem;
     align-items: center;
+    padding-bottom: 1rem;
   }
 
   .layer {
