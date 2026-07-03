@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from pydantic import BaseModel, Field
@@ -17,6 +17,8 @@ logger = structlog.get_logger(__name__)
 
 class ActionResponse(BaseModel):
     """Thin wrapper for Gemini structured output deserialization."""
+
+    model_config = {"extra": "forbid"}
 
     type: str
     arguments: dict[str, Any] = Field(default_factory=dict)
@@ -69,10 +71,13 @@ class GeminiAgent:
         user_prompt = self._build_user_prompt(task, observation, available_actions)
 
         try:
-            result = self._client.generate_structured(
-                system_prompt=self._system_prompt,
-                user_prompt=user_prompt,
-                response_schema=ActionResponse,
+            result = cast(
+                ActionResponse,
+                self._client.generate_structured(
+                    system_prompt=self._system_prompt,
+                    user_prompt=user_prompt,
+                    response_schema=ActionResponse,
+                ),
             )
 
             if result.type not in available_actions:
@@ -84,7 +89,7 @@ class GeminiAgent:
                 return self._fallback_action(observation)
 
             expense_id = result.arguments.get("expense_id")
-            if expense_id and expense_id not in observation.get("expenses", {}):
+            if not expense_id or expense_id not in observation.get("expenses", {}):
                 logger.warning("gemini_bad_expense_id", expense_id=expense_id)
                 return self._fallback_action(observation)
 

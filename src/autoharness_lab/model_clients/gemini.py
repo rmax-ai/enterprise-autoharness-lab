@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 import structlog
 from pydantic import BaseModel
@@ -33,6 +34,22 @@ class GeminiModelClient:
 
         self._client = genai.Client(api_key=self._api_key)
 
+    @staticmethod
+    def _strip_additional_properties(schema: dict[str, Any]) -> dict[str, Any]:
+        """Recursively remove 'additionalProperties' keys from JSON schema.
+
+        Gemini's structured output rejects any form of additionalProperties,
+        even when set to false. Pydantic v2 emits it at every object level.
+        """
+        if isinstance(schema, dict):
+            schema.pop("additionalProperties", None)
+            for value in schema.values():
+                GeminiModelClient._strip_additional_properties(value)
+        elif isinstance(schema, list):
+            for item in schema:
+                GeminiModelClient._strip_additional_properties(item)
+        return schema
+
     def generate_structured(
         self,
         system_prompt: str,
@@ -42,10 +59,15 @@ class GeminiModelClient:
         """Call Gemini with structured output and return a deserialized Pydantic model."""
         from google.genai import types
 
+        # Strip additionalProperties — Gemini rejects it entirely
+        schema_dict = self._strip_additional_properties(
+            response_schema.model_json_schema()
+        )
+
         config = types.GenerateContentConfig(
             system_instruction=system_prompt,
             response_mime_type="application/json",
-            response_schema=response_schema,
+            response_schema=schema_dict,
         )
 
         try:
