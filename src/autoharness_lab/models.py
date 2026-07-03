@@ -6,7 +6,7 @@ No framework dependencies. No I/O. Pure data contracts.
 
 from __future__ import annotations
 
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
@@ -224,6 +224,7 @@ class Agent(Protocol):
 # ── Model Client Protocol ─────────────────────────────────────────────
 
 
+@runtime_checkable
 class ModelClient(Protocol):
     """Provider-agnostic LLM client protocol."""
 
