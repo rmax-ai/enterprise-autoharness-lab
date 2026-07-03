@@ -18,6 +18,8 @@ from autoharness_lab.environments.expense_approval import (
     ExpenseApprovalEnvironment,
 )
 from autoharness_lab.environments.support_ticket import SupportTicketEnvironment
+from autoharness_lab.evaluation.drift import run_drift_experiment
+from autoharness_lab.evaluation.mutations import get_mutations
 from autoharness_lab.evaluation.runner import (
     compute_all_metrics,
     load_scenarios,
@@ -33,6 +35,7 @@ from autoharness_lab.reporting.csv_exporter import save_csv
 from autoharness_lab.reporting.html import save_html_report
 from autoharness_lab.reporting.markdown import save_markdown_report
 from autoharness_lab.synthesis.generator import GeneratorResponse
+from autoharness_lab.synthesis.refiner import RefinerResponse
 from autoharness_lab.synthesis.search import SynthesisLoop
 
 app = typer.Typer(help="Enterprise AutoHarness Lab CLI")
@@ -555,3 +558,118 @@ def report(
 
     console.print()
     console.print(f"[bold]Best score:[/bold] {result.best_score:.3f}" if result.best_score else "")
+
+
+# ── Mutate Command ────────────────────────────────────────────────────
+
+
+@app.command()
+def mutate(
+    environment: str = typer.Option(
+        "expense-approval", "--environment", "-e", help="Environment to mutate"
+    ),
+    mutation: str = typer.Option(
+        None, "--mutation", "-m", help="Mutation ID (use --list to see options)"
+    ),
+    agent: str = typer.Option("noisy", "--agent", "-a", help="Agent to use"),
+    iterations: int = typer.Option(
+        3, "--iterations", "-i", help="Max synthesis iterations", min=1, max=10
+    ),
+    seed: int = typer.Option(42, "--seed", "-s", help="Random seed"),
+    list_mutations: bool = typer.Option(  # noqa: FBT001
+        False, "--list", "-l", help="List available mutations"  # noqa: FBT003
+    ),
+):
+    """Run a drift experiment — mutate environment and measure recovery.
+
+    Applies a mutation to the environment config, measures how much the
+    current harness degrades, then re-synthesizes a new harness and
+    reports recovery metrics.
+    """
+    if list_mutations:
+        mutations = get_mutations(environment)
+        if not mutations:
+            console.print(f"[yellow]No mutations available for {environment}[/yellow]")
+            return
+
+        table = Table(title=f"Available Mutations: {environment}")
+        table.add_column("ID", style="cyan")
+        table.add_column("Description", style="white")
+        for m in mutations:
+            table.add_row(m.mutation_id, m.description)
+        console.print(table)
+        return
+
+    if mutation is None:
+        console.print("[red]--mutation is required (use --list to see options)[/red]")
+        raise typer.Exit(1)
+
+    console.print("[bold]Drift Experiment[/bold]")
+    console.print(f"  Environment: [cyan]{environment}[/cyan]")
+    console.print(f"  Mutation: [yellow]{mutation}[/yellow]")
+    console.print(f"  Agent: [cyan]{agent}[/cyan]")
+    console.print()
+
+    # Setup mock client
+    mock = MockModelClient()
+    gen_sys = "You are a Python code generation system that produces validation functions."
+    ref_sys = "You are a Python code refinement system."
+    default_code = (
+        "def evaluate_action(observation, proposed_action):\n"
+        '    return {"accepted": True, "normalized_action": proposed_action,'
+        ' "reason": "default", "confidence": 0.5}\n'
+    )
+    mock.register(gen_sys, "", GeneratorResponse, GeneratorResponse(code=default_code))
+    mock.register(ref_sys, "", RefinerResponse, RefinerResponse(code=default_code))
+
+    with (
+        tempfile.TemporaryDirectory() as tmp,
+        console.status("[bold green]Running drift experiment..."),
+    ):
+        result = run_drift_experiment(
+            environment=environment,
+            mutation_id=mutation,
+            registry_root=Path(tmp),
+            model_client=mock,
+            agent_name=agent,
+            seed=seed,
+            max_iterations=iterations,
+        )
+
+    console.print()
+    console.print(f"[bold]Mutation:[/bold] {result.description}")
+
+    # Results table
+    table = Table(title="Drift Experiment Results")
+    table.add_column("Phase", style="cyan")
+    table.add_column("Score", style="yellow")
+    table.add_column("Delta", style="magenta")
+
+    table.add_row(
+        "Baseline (original)",
+        f"{result.baseline_score:.3f}",
+        "-",
+    )
+    table.add_row(
+        "Degraded (mutated)",
+        f"{result.degraded_score:.3f}",
+        f"[red]{result.score_drop:+.3f}[/red]",
+    )
+    if result.recovered:
+        table.add_row(
+            "Recovered (resynthesized)",
+            f"{result.recovered_score:.3f}",
+            f"[green]{result.recovery_delta:+.3f}[/green]" if result.recovery_delta else "-",
+        )
+
+    console.print(table)
+
+    # Recovery stats
+    if result.recovered:
+        console.print()
+        console.print("[bold]Recovery Stats:[/bold]")
+        console.print(f"  Counterexamples needed: [cyan]{result.counterexamples_needed}[/cyan]")
+        console.print(f"  Iterations to recover: [cyan]{result.iterations_to_recover}[/cyan]")
+    else:
+        console.print()
+        console.print("[red]Harness did not recover after mutation.[/red]")
