@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
+from typing import Any
 
 from autoharness_lab.models import (
     AttemptRecord,
@@ -118,6 +119,32 @@ def compute_composite_score(
     return max(score, -1.0)  # Floor at -1.0
 
 
+def _extract_resource_from_observation(
+    action_args: dict[str, Any],
+    observation: dict[str, Any],
+) -> tuple[str | None, dict[str, Any] | None]:
+    """Extract resource ID and state item from observation generically.
+
+    Works across all environments (expense/ticket/deployment) by
+    auto-detecting the resource field and collection key.
+    """
+    resource_id = None
+    for id_field in ("expense_id", "ticket_id", "deployment_id"):
+        rid = action_args.get(id_field)
+        if rid:
+            resource_id = rid
+            break
+
+    resource_item = None
+    for coll_key in ("expenses", "tickets", "deployments"):
+        collection = observation.get(coll_key, {})
+        if resource_id and resource_id in collection:
+            resource_item = collection[resource_id]
+            break
+
+    return resource_id, resource_item
+
+
 def compute_all_metrics(records: list[AttemptRecord]) -> dict[str, float]:
     """Compute all metrics for a set of records."""
     return {
@@ -202,16 +229,18 @@ def run_experiment(
                 )
                 harness_decision = HarnessDecision(**harness_result)
 
-            # Policy engine evaluates
-            expense_id = proposed_action.arguments.get("expense_id")
-            expense_state = observation.get("expenses", {}).get(expense_id)
+            # Policy engine evaluates (environment-agnostic)
+            _rid, resource_item = _extract_resource_from_observation(
+                proposed_action.arguments, observation
+            )
+            action_dict = {
+                "type": proposed_action.type,
+                "arguments": proposed_action.arguments,
+            }
             policy_decision = policy_engine.evaluate(
-                actor=scenario.actor,
-                action={
-                    "type": proposed_action.type,
-                    "arguments": proposed_action.arguments,
-                },
-                expense=expense_state,
+                scenario.actor,
+                action_dict,
+                resource_item,
             )
 
             # If policy denies, don't execute — record and continue

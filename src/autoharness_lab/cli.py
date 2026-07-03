@@ -13,9 +13,11 @@ from rich.table import Table
 
 from autoharness_lab.agents.noisy import NoisyAgent
 from autoharness_lab.agents.scripted import ScriptedAgent
+from autoharness_lab.environments.deployment import DeploymentEnvironment
 from autoharness_lab.environments.expense_approval import (
     ExpenseApprovalEnvironment,
 )
+from autoharness_lab.environments.support_ticket import SupportTicketEnvironment
 from autoharness_lab.evaluation.runner import (
     compute_all_metrics,
     load_scenarios,
@@ -24,7 +26,9 @@ from autoharness_lab.evaluation.runner import (
 from autoharness_lab.harness.contracts import HarnessRuntime
 from autoharness_lab.harness.registry import HarnessRegistry
 from autoharness_lab.model_clients.mock import MockModelClient
+from autoharness_lab.policy.deployment import DeploymentPolicyEngine
 from autoharness_lab.policy.expense import ExpensePolicyEngine
+from autoharness_lab.policy.support import SupportTicketPolicyEngine
 from autoharness_lab.reporting.csv_exporter import save_csv
 from autoharness_lab.reporting.html import save_html_report
 from autoharness_lab.reporting.markdown import save_markdown_report
@@ -45,6 +49,8 @@ def _get_environment(name: str):
     """Get an environment factory by name."""
     environments = {
         "expense-approval": lambda: ExpenseApprovalEnvironment(),
+        "support-ticket": lambda: SupportTicketEnvironment(),
+        "deployment": lambda: DeploymentEnvironment(),
     }
     if name not in environments:
         console.print(f"[red]Unknown environment: {name}[/red]")
@@ -68,8 +74,13 @@ def _get_agent(name: str, seed: int = 42):
 
 def _get_policy_engine(environment: str):
     """Get a policy engine by environment name."""
-    if environment == "expense-approval":
-        return ExpensePolicyEngine()
+    engines = {
+        "expense-approval": ExpensePolicyEngine(),
+        "support-ticket": SupportTicketPolicyEngine(),
+        "deployment": DeploymentPolicyEngine(),
+    }
+    if environment in engines:
+        return engines[environment]
     raise typer.Exit(1)
 
 
@@ -106,8 +117,16 @@ def list_environments():
         "submit, request_receipt, approve, reject, escalate",
         "✓ ready",
     )
-    table.add_row("support-ticket", "assign, priority, resolve, refund, escalate", "⏳ planned")
-    table.add_row("deployment", "create, approve, start, cancel, rollback", "⏳ planned")
+    table.add_row(
+        "support-ticket",
+        "assign, set_priority, add_note, resolve, close, escalate, reopen",
+        "✓ ready",
+    )
+    table.add_row(
+        "deployment",
+        "create, approve, start, verify, cancel, rollback",
+        "✓ ready",
+    )
 
     console.print(table)
 
@@ -367,6 +386,66 @@ def _get_environment_spec(environment: str) -> dict | None:
                 "Manager approval required above 1000.0 threshold",
                 "Unsupported currencies are rejected on submit",
                 "Expense ID is required for all actions",
+                "Unknown action types must be rejected",
+            ],
+        },
+        "support-ticket": {
+            "name": "support-ticket",
+            "supported_actions": [
+                "assign_ticket",
+                "set_priority",
+                "add_note",
+                "resolve_ticket",
+                "close_ticket",
+                "escalate_ticket",
+                "reopen_ticket",
+            ],
+            "state_transitions": {
+                "new": ["assigned"],
+                "assigned": ["in_progress", "escalated"],
+                "in_progress": ["resolved", "escalated"],
+                "resolved": ["closed", "reopened"],
+                "closed": [],
+                "escalated": ["assigned", "in_progress"],
+            },
+            "validation_rules": [
+                "Ticket ID is required for all actions",
+                "Cannot close ticket without notes",
+                "Cannot resolve unassigned ticket",
+                "Cannot escalate resolved/closed tickets",
+                "Cannot reopen beyond max reopen limit",
+                "Cannot assign already-closed tickets",
+                "Self-reassignment is not allowed",
+                "Unknown action types must be rejected",
+            ],
+        },
+        "deployment": {
+            "name": "deployment",
+            "supported_actions": [
+                "create_deployment",
+                "approve_deployment",
+                "start_deployment",
+                "verify_deployment",
+                "cancel_deployment",
+                "rollback_deployment",
+            ],
+            "state_transitions": {
+                "draft": ["approved", "cancelled"],
+                "approved": ["in_progress", "cancelled"],
+                "in_progress": ["deployed", "cancelled"],
+                "deployed": ["verified", "rolled_back"],
+                "verified": ["rolled_back"],
+                "rolled_back": [],
+                "cancelled": [],
+            },
+            "validation_rules": [
+                "Cannot self-approve deployment",
+                "Production deployments require change window",
+                "High-risk deployments need manager approval",
+                "Production freeze blocks all prod activity",
+                "Cannot cancel verified deployments",
+                "Max rollback limit per service enforced",
+                "Deployment ID is required for all actions",
                 "Unknown action types must be rejected",
             ],
         },
