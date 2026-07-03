@@ -22,8 +22,12 @@ from autoharness_lab.evaluation.runner import (
     run_experiment,
 )
 from autoharness_lab.harness.contracts import HarnessRuntime
+from autoharness_lab.harness.registry import HarnessRegistry
 from autoharness_lab.model_clients.mock import MockModelClient
 from autoharness_lab.policy.expense import ExpensePolicyEngine
+from autoharness_lab.reporting.csv_exporter import save_csv
+from autoharness_lab.reporting.html import save_html_report
+from autoharness_lab.reporting.markdown import save_markdown_report
 from autoharness_lab.synthesis.generator import GeneratorResponse
 from autoharness_lab.synthesis.search import SynthesisLoop
 
@@ -368,3 +372,107 @@ def _get_environment_spec(environment: str) -> dict | None:
         },
     }
     return specs.get(environment)
+
+
+# ── Report Command ────────────────────────────────────────────────────
+
+
+@app.command()
+def report(
+    environment: str = typer.Option(
+        "expense-approval", "--environment", "-e", help="Environment to report on"
+    ),
+    agent: str = typer.Option("noisy", "--agent", "-a", help="Agent to use"),
+    iterations: int = typer.Option(
+        3, "--iterations", "-i", help="Synthesis iterations", min=1, max=20
+    ),
+    output_dir: str = typer.Option(
+        "./reports", "--output", "-o", help="Output directory for reports"
+    ),
+    formats: str = typer.Option(
+        "md,html,csv",
+        "--formats",
+        "-f",
+        help="Report formats: md, html, csv (comma-separated)",
+    ),
+    seed: int = typer.Option(42, "--seed", "-s", help="Random seed"),
+):
+    """Run synthesis and generate reports in multiple formats.
+
+    Runs a full synthesis experiment then generates:
+    - Markdown report (report.md)
+    - Self-contained HTML report (report.html)
+    - CSV metrics export (metrics.csv)
+
+    Reports are saved to the specified output directory.
+    """
+    env_spec = _get_environment_spec(environment)
+    if env_spec is None:
+        console.print(f"[red]No spec for environment: {environment}[/red]")
+        raise typer.Exit(1)
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    format_list = [f.strip().lower() for f in formats.split(",")]
+
+    console.print("[bold]Running synthesis for report...[/bold]")
+    console.print(f"  Environment: [cyan]{environment}[/cyan]")
+    console.print(f"  Output: [dim]{out.resolve()}[/dim]")
+    console.print(f"  Formats: [yellow]{', '.join(format_list)}[/yellow]")
+    console.print()
+
+    # Run synthesis with temp registry
+    registry_dir = Path(tempfile.mkdtemp(prefix="autoharness-report-"))
+    registry = HarnessRegistry(registry_dir)
+
+    mock = MockModelClient()
+    mock.register(
+        "You are a Python code generation system",
+        "",
+        GeneratorResponse,
+        GeneratorResponse(
+            code=(
+                "def evaluate_action(observation, proposed_action):\n"
+                '    return {"accepted": True, "normalized_action": proposed_action,'
+                ' "reason": "default", "confidence": 0.5}\n'
+            )
+        ),
+    )
+
+    loop = SynthesisLoop(
+        model_client=mock,
+        registry_root=registry_dir,
+        environment=environment,
+        agent_name=agent,
+        max_iterations=iterations,
+        seed=seed,
+    )
+
+    with console.status("[bold green]Running synthesis..."):
+        result = loop.run(environment_spec=env_spec)
+
+    console.print("[green]Synthesis complete.[/green]")
+    console.print()
+
+    # Generate reports
+    generated: list[str] = []
+
+    if "md" in format_list:
+        path = save_markdown_report(result, registry, environment, out / "report.md")
+        generated.append(f"  - Markdown: [dim]{path}[/dim]")
+
+    if "html" in format_list:
+        path = save_html_report(result, registry, environment, out / "report.html")
+        generated.append(f"  - HTML: [dim]{path}[/dim]")
+
+    if "csv" in format_list:
+        path = save_csv(result, out / "metrics.csv")
+        generated.append(f"  - CSV: [dim]{path}[/dim]")
+
+    console.print("[bold]Reports generated:[/bold]")
+    for line in generated:
+        console.print(line)
+
+    console.print()
+    console.print(f"[bold]Best score:[/bold] {result.best_score:.3f}" if result.best_score else "")
