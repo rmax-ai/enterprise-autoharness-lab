@@ -3,19 +3,18 @@
 from autoharness_lab.model_clients.mock import MockModelClient
 from autoharness_lab.synthesis.refiner import HarnessRefiner, RefinerResponse
 
-
-ORIGINAL_CODE = '''
+ORIGINAL_CODE = """
 def evaluate_action(observation, proposed_action):
     return {"accepted": True, "normalized_action": proposed_action, "reason": "accept all", "confidence": 0.5}
-'''
+"""
 
-IMPROVED_CODE = '''
+IMPROVED_CODE = """
 def evaluate_action(observation, proposed_action):
     action_type = proposed_action.get("type", "")
     if action_type == "submit_expense":
         return {"accepted": True, "normalized_action": proposed_action, "reason": "valid", "confidence": 0.9}
     return {"accepted": False, "normalized_action": None, "reason": "reject unknown", "confidence": 0.5}
-'''
+"""
 
 
 class TestHarnessRefiner:

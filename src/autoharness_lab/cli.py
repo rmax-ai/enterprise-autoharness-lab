@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import uuid
 from pathlib import Path
 
@@ -21,7 +22,10 @@ from autoharness_lab.evaluation.runner import (
     run_experiment,
 )
 from autoharness_lab.harness.contracts import HarnessRuntime
+from autoharness_lab.model_clients.mock import MockModelClient
 from autoharness_lab.policy.expense import ExpensePolicyEngine
+from autoharness_lab.synthesis.generator import GeneratorResponse
+from autoharness_lab.synthesis.search import SynthesisLoop
 
 app = typer.Typer(help="Enterprise AutoHarness Lab CLI")
 console = Console()
@@ -220,3 +224,147 @@ def run_baseline(
 
 if __name__ == "__main__":
     app()
+
+
+# ── Synthesize Command ────────────────────────────────────────────────
+
+
+@app.command()
+def synthesize(
+    environment: str = typer.Option(
+        "expense-approval", "--environment", "-e", help="Environment to synthesize harness for"
+    ),
+    agent: str = typer.Option("noisy", "--agent", "-a", help="Agent to generate failures from"),
+    iterations: int = typer.Option(
+        5, "--iterations", "-i", help="Maximum refinement iterations", min=1, max=20
+    ),
+    seed: int = typer.Option(42, "--seed", "-s", help="Random seed"),
+    registry_dir: str = typer.Option(
+        None, "--registry", "-r", help="Registry directory (default: temp dir)"
+    ),
+):
+    """Synthesize a harness from agent execution failures.
+
+    Runs the full synthesis pipeline:
+    1. Generate initial harness from environment spec
+    2. Evaluate against test scenarios
+    3. Extract counterexamples from failures
+    4. Refine harness
+    5. Promote if score improved
+    6. Repeat
+
+    Uses a mock model client by default for deterministic synthesis.
+    """
+    env_spec = _get_environment_spec(environment)
+    if env_spec is None:
+        console.print(f"[red]No spec available for environment: {environment}[/red]")
+        raise typer.Exit(1)
+
+    registry_path = (
+        Path(registry_dir) if registry_dir else Path(tempfile.mkdtemp(prefix="autoharness-"))
+    )
+
+    console.print("[bold]Synthesis Configuration[/bold]")
+    console.print(f"  Environment: [cyan]{environment}[/cyan]")
+    console.print(f"  Agent: [cyan]{agent}[/cyan]")
+    console.print(f"  Max iterations: [cyan]{iterations}[/cyan]")
+    console.print(f"  Registry: [dim]{registry_path}[/dim]")
+    console.print()
+
+    # Use mock client
+    mock = MockModelClient()
+
+    # Provide a default generator response
+    mock.register(
+        "You are a Python code generation system",
+        "",
+        GeneratorResponse,
+        GeneratorResponse(
+            code=(
+                "def evaluate_action(observation, proposed_action):\n"
+                '    return {"accepted": True, "normalized_action": proposed_action,'
+                ' "reason": "default", "confidence": 0.5}\n'
+            )
+        ),
+    )
+
+    loop = SynthesisLoop(
+        model_client=mock,
+        registry_root=registry_path,
+        environment=environment,
+        agent_name=agent,
+        max_iterations=iterations,
+        seed=seed,
+    )
+
+    with console.status("[bold green]Running synthesis..."):
+        result = loop.run(environment_spec=env_spec)
+
+    console.print()
+    console.print("[bold]Synthesis Complete[/bold]")
+    console.print(f"  Iterations: [cyan]{result.iterations_completed}[/cyan]")
+    console.print(
+        f"  Best score: [yellow]{result.best_score:.3f}[/yellow]"
+        if result.best_score
+        else "  Best score: N/A"
+    )
+
+    # Show iteration history
+    table = Table(title="Iteration History")
+    table.add_column("Iter", style="dim")
+    table.add_column("Harness ID", style="cyan")
+    table.add_column("Score", style="yellow")
+    table.add_column("Promoted", style="green")
+    table.add_column("CE Count", style="red")
+
+    for record in result.history:
+        promoted_str = "[green]✓[/green]" if record.promoted else "[dim]-[/dim]"
+        table.add_row(
+            str(record.iteration),
+            record.harness_id[:32] + "...",
+            f"{record.composite_score:.3f}",
+            promoted_str,
+            str(record.num_counterexamples),
+        )
+
+    console.print(table)
+
+    if result.final_harness:
+        console.print()
+        console.print("[bold]Final Harness Code:[/bold]")
+        console.print(f"[dim]{result.final_harness.code[:500]}[/dim]")
+        if len(result.final_harness.code) > 500:
+            console.print(f"[dim]... [{len(result.final_harness.code) - 500} more chars][/dim]")
+
+
+def _get_environment_spec(environment: str) -> dict | None:
+    """Get the spec dict for an environment."""
+    specs = {
+        "expense-approval": {
+            "name": "expense-approval",
+            "supported_actions": [
+                "submit_expense",
+                "request_receipt",
+                "approve_expense",
+                "reject_expense",
+                "escalate_expense",
+            ],
+            "state_transitions": {
+                "draft": ["submitted"],
+                "submitted": ["approved", "rejected"],
+                "approved": [],
+                "rejected": [],
+            },
+            "validation_rules": [
+                "Cannot approve own expense (self-approval denied)",
+                "Cannot approve already approved expense",
+                "Cannot approve rejected expense",
+                "Receipt required for expenses above 50.0",
+                "Manager approval required above 1000.0 threshold",
+                "Unsupported currencies are rejected on submit",
+                "Expense ID is required for all actions",
+                "Unknown action types must be rejected",
+            ],
+        },
+    }
+    return specs.get(environment)

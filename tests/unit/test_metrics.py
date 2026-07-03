@@ -1,11 +1,9 @@
 """Unit tests for metrics."""
 
 from autoharness_lab.evaluation.runner import (
-    compute_all_metrics,
     compute_composite_score,
     compute_false_acceptance_rate,
     compute_invalid_action_rate,
-    compute_policy_denial_rate,
     compute_task_success_rate,
 )
 from autoharness_lab.models import (

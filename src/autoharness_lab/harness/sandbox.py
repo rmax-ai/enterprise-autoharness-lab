@@ -10,7 +10,6 @@ import json
 import subprocess
 import sys
 import textwrap
-import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -134,9 +133,7 @@ class SandboxExecutor:
         if not validation.valid:
             return None
 
-        result = self._run_in_subprocess(
-            "repair_action", observation, proposed_action, failure
-        )
+        result = self._run_in_subprocess("repair_action", observation, proposed_action, failure)
         return result.data
 
     def _run_in_subprocess(self, func_name: str, *args: Any) -> SandboxResult:

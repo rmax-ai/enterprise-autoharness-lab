@@ -18,48 +18,54 @@ class ValidationResult:
     errors: list[str] = field(default_factory=list)
 
     @classmethod
-    def success(cls) -> "ValidationResult":
+    def success(cls) -> ValidationResult:
         return cls(valid=True)
 
     @classmethod
-    def failure(cls, errors: list[str]) -> "ValidationResult":
+    def failure(cls, errors: list[str]) -> ValidationResult:
         return cls(valid=False, errors=errors)
 
 
 # ── Forbidden constructs ────────────────────────────────────────────────
 
-FORBIDDEN_BUILTINS = frozenset({
-    "eval",
-    "exec",
-    "compile",
-    "open",
-    "__import__",
-    "globals",
-    "locals",
-    "vars",
-    "getattr",
-    "setattr",
-    "delattr",
-    "hasattr",
-    "breakpoint",
-    "input",
-})
+FORBIDDEN_BUILTINS = frozenset(
+    {
+        "eval",
+        "exec",
+        "compile",
+        "open",
+        "__import__",
+        "globals",
+        "locals",
+        "vars",
+        "getattr",
+        "setattr",
+        "delattr",
+        "hasattr",
+        "breakpoint",
+        "input",
+    }
+)
 
-FORBIDDEN_NAMES = frozenset({
-    "__class__",
-    "__bases__",
-    "__subclasses__",
-    "__mro__",
-    "__globals__",
-    "__code__",
-    "__closure__",
-    "__dict__",
-    "__builtins__",
-})
+FORBIDDEN_NAMES = frozenset(
+    {
+        "__class__",
+        "__bases__",
+        "__subclasses__",
+        "__mro__",
+        "__globals__",
+        "__code__",
+        "__closure__",
+        "__dict__",
+        "__builtins__",
+    }
+)
 
-ALLOWED_MODULES = frozenset({
-    "json",
-})
+ALLOWED_MODULES = frozenset(
+    {
+        "json",
+    }
+)
 
 
 class _HarnessValidator(ast.NodeVisitor):
@@ -83,9 +89,8 @@ class _HarnessValidator(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> None:
-        if isinstance(node.func, ast.Name):
-            if node.func.id in FORBIDDEN_BUILTINS:
-                self.errors.append(f"Forbidden builtin call: {node.func.id}()")
+        if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_BUILTINS:
+            self.errors.append(f"Forbidden builtin call: {node.func.id}()")
         self.generic_visit(node)
 
     def visit_Attribute(self, node: ast.Attribute) -> None:

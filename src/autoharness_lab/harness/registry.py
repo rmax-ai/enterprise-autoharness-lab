@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from autoharness_lab.models import HarnessArtifact
@@ -57,11 +57,7 @@ class HarnessRegistry:
         env_dir.mkdir(parents=True, exist_ok=True)
 
         existing = sorted(
-            [
-                d
-                for d in env_dir.iterdir()
-                if d.is_dir() and d.name.startswith("v")
-            ],
+            [d for d in env_dir.iterdir() if d.is_dir() and d.name.startswith("v")],
             key=lambda d: int(d.name[1:]),
         )
         version = len(existing)
@@ -84,7 +80,7 @@ class HarnessRegistry:
             parent_harness_id=parent_harness_id,
             model_name=model_name,
             generation_prompt_hash=generation_prompt_hash,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             static_validation={},
             evaluation_metrics={},
             approved_by=None,
@@ -106,9 +102,7 @@ class HarnessRegistry:
                     meta = json.loads(meta_path.read_text())
                     if meta.get("harness_id") == harness_id:
                         code_path = version_dir / "harness.py"
-                        meta["code"] = (
-                            code_path.read_text() if code_path.exists() else ""
-                        )
+                        meta["code"] = code_path.read_text() if code_path.exists() else ""
                         return HarnessArtifact(**meta)
         return None
 

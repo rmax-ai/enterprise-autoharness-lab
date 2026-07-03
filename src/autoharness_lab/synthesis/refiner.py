@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib import resources
 from typing import Any
 
@@ -73,9 +73,7 @@ class HarnessRefiner:
 
         system_prompt = "You are a Python code refinement system."
 
-        prompt_hash = hashlib.sha256(
-            f"{system_prompt}{user_prompt}".encode()
-        ).hexdigest()[:16]
+        prompt_hash = hashlib.sha256(f"{system_prompt}{user_prompt}".encode()).hexdigest()[:16]
 
         response = self._client.generate_structured(
             system_prompt=system_prompt,
@@ -96,7 +94,7 @@ class HarnessRefiner:
             parent_harness_id=parent_harness_id,
             model_name="mock",
             generation_prompt_hash=prompt_hash,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             static_validation={},
             evaluation_metrics={},
         )

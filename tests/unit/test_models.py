@@ -5,7 +5,6 @@ from pydantic import ValidationError
 
 from autoharness_lab.models import (
     Action,
-    AttemptRecord,
     Counterexample,
     ExecutionResult,
     HarnessDecision,

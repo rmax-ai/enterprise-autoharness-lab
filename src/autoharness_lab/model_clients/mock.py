@@ -23,7 +23,7 @@ class MockModelClient:
         self._static_response: BaseModel | None = None
 
     @classmethod
-    def with_static(cls, response: BaseModel) -> "MockModelClient":
+    def with_static(cls, response: BaseModel) -> MockModelClient:
         """Create a client that always returns the same response."""
         client = cls()
         client._static_response = response
@@ -73,14 +73,13 @@ class MockModelClient:
         sys_key = system_prompt[:40]
         # Try exact match first, then wildcard user_prompt
         for (reg_sys, reg_usr), (schema, response) in self._responses.items():
-            if reg_sys == sys_key:
-                if reg_usr == "" or reg_usr == user_prompt[:40]:
-                    if schema is not response_schema:
-                        raise TypeError(
-                            f"Registered schema {schema.__name__} does not match "
-                            f"requested {response_schema.__name__}"
-                        )
-                    return response
+            if reg_sys == sys_key and (reg_usr == "" or reg_usr == user_prompt[:40]):
+                if schema is not response_schema:
+                    raise TypeError(
+                        f"Registered schema {schema.__name__} does not match "
+                        f"requested {response_schema.__name__}"
+                    )
+                return response
 
         if self._default is not None:
             schema, response = self._default

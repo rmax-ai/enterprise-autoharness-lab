@@ -8,14 +8,13 @@ from autoharness_lab.synthesis.generator import GeneratorResponse
 from autoharness_lab.synthesis.refiner import RefinerResponse
 from autoharness_lab.synthesis.search import SynthesisLoop
 
-
-VALID_CODE_v0 = '''
+VALID_CODE_v0 = """
 def evaluate_action(observation, proposed_action):
     # Accept everything — deliberately weak start
     return {"accepted": True, "normalized_action": proposed_action, "reason": "accept all", "confidence": 0.3}
-'''
+"""
 
-VALID_CODE_v1 = '''
+VALID_CODE_v1 = """
 def evaluate_action(observation, proposed_action):
     action_type = proposed_action.get("type", "")
     if action_type not in ("submit_expense", "approve_expense", "reject_expense", "request_receipt", "escalate_expense"):
@@ -24,24 +23,30 @@ def evaluate_action(observation, proposed_action):
     if not args.get("expense_id"):
         return {"accepted": False, "normalized_action": None, "reason": "missing expense_id", "confidence": 0.99}
     return {"accepted": True, "normalized_action": proposed_action, "reason": "valid", "confidence": 0.7}
-'''
+"""
 
 GEN_SYS = "You are a Python code generation system that produces validation functions."
 REF_SYS = "You are a Python code refinement system."
 
 
-def _make_mock(generator_code: str = VALID_CODE_v0, refiner_code: str = VALID_CODE_v1) -> MockModelClient:
+def _make_mock(
+    generator_code: str = VALID_CODE_v0, refiner_code: str = VALID_CODE_v1
+) -> MockModelClient:
     """Create a mock client with generator and refiner responses registered."""
     mock = MockModelClient()
     # Generator: match on system_prompt prefix
     mock.register(
-        GEN_SYS, "",
-        GeneratorResponse, GeneratorResponse(code=generator_code),
+        GEN_SYS,
+        "",
+        GeneratorResponse,
+        GeneratorResponse(code=generator_code),
     )
     # Refiner: match on system_prompt prefix
     mock.register(
-        REF_SYS, "",
-        RefinerResponse, RefinerResponse(code=refiner_code),
+        REF_SYS,
+        "",
+        RefinerResponse,
+        RefinerResponse(code=refiner_code),
     )
     return mock
 

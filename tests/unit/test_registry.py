@@ -5,11 +5,10 @@ from pathlib import Path
 
 from autoharness_lab.harness.registry import HarnessRegistry
 
-
-VALID_CODE = '''
+VALID_CODE = """
 def evaluate_action(observation, proposed_action):
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
 
 
 class TestHarnessRegistry:

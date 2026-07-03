@@ -19,9 +19,7 @@ class TestMockClient:
 
     def test_returns_registered_response(self):
         client = MockModelClient()
-        client.register(
-            "test prompt", "test prompt", MockResponse, MockResponse(code="x = 1")
-        )
+        client.register("test prompt", "test prompt", MockResponse, MockResponse(code="x = 1"))
         result = client.generate_structured("test prompt", "test prompt", MockResponse)
         assert result.code == "x = 1"
 

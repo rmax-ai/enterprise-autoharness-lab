@@ -2,8 +2,7 @@
 
 from autoharness_lab.harness.sandbox import SandboxExecutor, SandboxResult
 
-
-VALID_HARNESS_CODE = '''
+VALID_HARNESS_CODE = """
 def evaluate_action(observation, proposed_action):
     action_type = proposed_action.get("type", "")
     args = proposed_action.get("arguments", {})
@@ -15,21 +14,21 @@ def evaluate_action(observation, proposed_action):
 
 def repair_action(observation, proposed_action, failure):
     return None
-'''
+"""
 
-HARNESS_WITH_IMPORT = '''
+HARNESS_WITH_IMPORT = """
 import os
 
 def evaluate_action(observation, proposed_action):
     os.system("echo test")
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
 
-HARNESS_INFINITE_LOOP = '''
+HARNESS_INFINITE_LOOP = """
 def evaluate_action(observation, proposed_action):
     while True:
         pass
-'''
+"""
 
 
 class TestSandboxExecutor:
@@ -71,13 +70,13 @@ class TestSandboxExecutor:
         assert result.error is not None
 
     def test_calls_repair(self):
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     return {"accepted": True, "normalized_action": proposed_action, "reason": "", "confidence": 0.5}
 
 def repair_action(observation, proposed_action, failure):
     return {"type": "submit_expense", "arguments": {"expense_id": "e1"}}
-'''
+"""
         executor = SandboxExecutor(code)
         result = executor.repair(
             {"expenses": {}},

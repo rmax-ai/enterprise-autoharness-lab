@@ -1,14 +1,13 @@
 """Tests for AST-based static validation of generated harness code."""
 
 from autoharness_lab.harness.static_validation import (
-    ValidationResult,
     validate_harness_code,
 )
 
 
 class TestStaticValidation:
     def test_accepts_valid_harness(self):
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     action_type = proposed_action.get("type", "")
     if action_type == "submit_expense":
@@ -24,67 +23,67 @@ def evaluate_action(observation, proposed_action):
         "reason": "unknown",
         "confidence": None
     }
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is True
         assert len(result.errors) == 0
 
     def test_rejects_import(self):
-        code = '''
+        code = """
 import os
 def evaluate_action(observation, proposed_action):
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is False
         assert any("import" in e.lower() for e in result.errors)
 
     def test_rejects_eval(self):
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     eval("print(1)")
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is False
         assert any("eval" in e.lower() for e in result.errors)
 
     def test_rejects_exec(self):
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     exec("x=1")
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is False
         assert any("exec" in e.lower() for e in result.errors)
 
     def test_rejects_open(self):
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     open("/etc/passwd")
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is False
         assert any("open" in e.lower() for e in result.errors)
 
     def test_rejects_getattr_reflection(self):
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     getattr(observation, "secret")
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is False
         assert any("getattr" in e.lower() for e in result.errors)
 
     def test_rejects_globals(self):
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     x = globals()
     return {"accepted": True, "normalized_action": None, "reason": "", "confidence": None}
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is False
         assert any("globals" in e.lower() for e in result.errors)
@@ -103,7 +102,7 @@ def evaluate_action(observation, proposed_action):
 
     def test_accepts_generated_style_harness(self):
         # Simulated harness the generator might produce
-        code = '''
+        code = """
 def evaluate_action(observation, proposed_action):
     action_type = proposed_action.get("type", "")
     args = proposed_action.get("arguments", {})
@@ -131,6 +130,6 @@ def evaluate_action(observation, proposed_action):
         return {"accepted": True, "normalized_action": proposed_action, "reason": "valid approve", "confidence": 0.85}
 
     return {"accepted": False, "normalized_action": None, "reason": f"unknown: {action_type}", "confidence": 0.5}
-'''
+"""
         result = validate_harness_code(code)
         assert result.valid is True, f"Errors: {result.errors}"
