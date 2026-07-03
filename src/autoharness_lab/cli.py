@@ -10,6 +10,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from autoharness_lab.agents.gemini import GeminiAgent
 from autoharness_lab.agents.noisy import NoisyAgent
 from autoharness_lab.agents.scripted import ScriptedAgent
 from autoharness_lab.environments.expense_approval import (
@@ -47,15 +48,16 @@ def _get_environment(name: str):
 
 def _get_agent(name: str, seed: int = 42):
     """Get an agent by name."""
-    agents = {
-        "scripted": ScriptedAgent(),
-        "noisy": NoisyAgent(seed=seed),
+    agent_factories = {
+        "scripted": ScriptedAgent,
+        "noisy": lambda: NoisyAgent(seed=seed),
+        "gemini": GeminiAgent,
     }
-    if name not in agents:
+    if name not in agent_factories:
         console.print(f"[red]Unknown agent: {name}[/red]")
-        console.print(f"Available: {', '.join(agents.keys())}")
+        console.print(f"Available: {', '.join(agent_factories.keys())}")
         raise typer.Exit(1)
-    return agents[name]
+    return agent_factories[name]()
 
 
 def _get_policy_engine(environment: str):

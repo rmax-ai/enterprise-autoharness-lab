@@ -185,6 +185,7 @@ def run_experiment(
 
         for step in range(max_steps):
             observation = env.state_snapshot()
+            observation["actor"] = scenario.actor
 
             # Agent proposes action
             proposed_action = agent.propose_action(

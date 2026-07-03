@@ -22,6 +22,7 @@ dependencies = [
     "typer>=0.9",
     "rich>=13.0",
     "structlog>=24.0",
+    "google-genai>=1.0,<2.0",
 ]
 
 [project.optional-dependencies]
@@ -34,10 +35,7 @@ reporting = [
     "jinja2>=3.1",
     "matplotlib>=3.8",
 ]
-web = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
-]
+
 
 [project.scripts]
 autoharness = "autoharness_lab.cli:app"
