@@ -62,9 +62,6 @@ ignore = ["ARG001", "ARG002"]
 [tool.ruff.format]
 quote-style = "double"
 
-[tool.ty]
-packages = ["src/autoharness_lab"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

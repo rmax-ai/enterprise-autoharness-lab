@@ -10,6 +10,7 @@ import uuid
 from pathlib import Path
 
 from autoharness_lab.models import (
+    Action,
     AttemptRecord,
     ExecutionResult,
     HarnessDecision,
@@ -150,6 +151,20 @@ def load_scenarios(path: Path) -> list[Scenario]:
 # ── Experiment Runner ────────────────────────────────────────────────
 
 
+def _infer_harness_failure_code(reason: str) -> str:
+    """Infer a failure code from a harness rejection reason."""
+    reason_lower = reason.lower()
+    if "unknown action type" in reason_lower:
+        return "UNKNOWN_ACTION"
+    if "missing required field: expense_id" in reason_lower:
+        return "MISSING_EXPENSE_ID"
+    if "receipt required" in reason_lower:
+        return "MISSING_RECEIPT"
+    if "cannot submit expense in state" in reason_lower:
+        return "INVALID_STATE"
+    return "HARNESS_REJECTED"
+
+
 def run_experiment(
     scenarios: list[Scenario],
     environment_factory,
@@ -193,6 +208,8 @@ def run_experiment(
                 observation=observation,
                 available_actions=available_actions,
             )
+            action_to_apply = proposed_action
+            harness_blocked_action = False
 
             # Harness evaluates (if available)
             harness_decision = None
@@ -202,64 +219,55 @@ def run_experiment(
                     {"type": proposed_action.type, "arguments": proposed_action.arguments},
                 )
                 harness_decision = HarnessDecision(**harness_result)
-
-                # Harness rejection blocks the action before policy/environment
-                if not harness_decision.accepted:
-                    result = ExecutionResult(
-                        status="invalid_action",
-                        observation=observation,
-                        error_code="HARNESS_REJECTED",
-                        message=f"Harness rejected: {harness_decision.reason}",
+                if harness_decision.accepted and harness_decision.normalized_action is not None:
+                    action_to_apply = harness_decision.normalized_action
+                elif not harness_decision.accepted:
+                    failure = {
+                        "error_code": _infer_harness_failure_code(harness_decision.reason),
+                        "message": harness_decision.reason,
+                    }
+                    repaired_action = harness_runtime.repair(
+                        observation,
+                        {"type": proposed_action.type, "arguments": proposed_action.arguments},
+                        failure,
                     )
-                    all_records.append(
-                        AttemptRecord(
-                            run_id=run_id,
-                            scenario_id=scenario.scenario_id,
-                            environment=env.name,
-                            agent=agent.name,
-                            observation=observation,
-                            proposed_action=proposed_action,
-                            harness_decision=harness_decision,
-                            policy_decision=None,
-                            execution_result=result,
-                            step_index=step,
-                        )
-                    )
-                    continue
+                    if repaired_action is not None:
+                        action_to_apply = Action.model_validate(repaired_action)
+                    else:
+                        harness_blocked_action = True
 
             # Policy engine evaluates
             # Detect domain entity from observation structure
-            entity = None
             if "expenses" in observation:
-                entity_id = proposed_action.arguments.get("expense_id")
+                entity_id = action_to_apply.arguments.get("expense_id")
                 entity = observation.get("expenses", {}).get(entity_id)
                 policy_decision = policy_engine.evaluate(
                     actor=scenario.actor,
                     action={
-                        "type": proposed_action.type,
-                        "arguments": proposed_action.arguments,
+                        "type": action_to_apply.type,
+                        "arguments": action_to_apply.arguments,
                     },
                     expense=entity,
                 )
             elif "tickets" in observation:
-                entity_id = proposed_action.arguments.get("ticket_id")
+                entity_id = action_to_apply.arguments.get("ticket_id")
                 entity = observation.get("tickets", {}).get(entity_id)
                 policy_decision = policy_engine.evaluate(
                     actor=scenario.actor,
                     action={
-                        "type": proposed_action.type,
-                        "arguments": proposed_action.arguments,
+                        "type": action_to_apply.type,
+                        "arguments": action_to_apply.arguments,
                     },
                     ticket=entity,
                 )
             elif "deployments" in observation:
-                entity_id = proposed_action.arguments.get("deployment_id")
+                entity_id = action_to_apply.arguments.get("deployment_id")
                 entity = observation.get("deployments", {}).get(entity_id)
                 policy_decision = policy_engine.evaluate(
                     actor=scenario.actor,
                     action={
-                        "type": proposed_action.type,
-                        "arguments": proposed_action.arguments,
+                        "type": action_to_apply.type,
+                        "arguments": action_to_apply.arguments,
                     },
                     deployment=entity,
                 )
@@ -267,13 +275,24 @@ def run_experiment(
                 policy_decision = policy_engine.evaluate(
                     actor=scenario.actor,
                     action={
-                        "type": proposed_action.type,
-                        "arguments": proposed_action.arguments,
+                        "type": action_to_apply.type,
+                        "arguments": action_to_apply.arguments,
                     },
                 )
 
+            # If harness rejects and cannot repair, don't execute
+            if harness_blocked_action:
+                reason = (
+                    harness_decision.reason if harness_decision is not None else "Unknown reason"
+                )
+                result = ExecutionResult(
+                    status="invalid_action",
+                    observation=observation,
+                    error_code="HARNESS_REJECTED",
+                    message=f"Harness rejected action: {reason}",
+                )
             # If policy denies, don't execute — record and continue
-            if not policy_decision.allowed:
+            elif not policy_decision.allowed:
                 result = ExecutionResult(
                     status="policy_denied",
                     observation=observation,
@@ -282,7 +301,7 @@ def run_experiment(
                 )
             else:
                 # Execute action in environment
-                result = env.execute(proposed_action)
+                result = env.execute(action_to_apply)
 
             # Record attempt
             record = AttemptRecord(

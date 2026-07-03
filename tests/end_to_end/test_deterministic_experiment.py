@@ -104,11 +104,9 @@ class TestDeterministicExperiment:
         metrics_no = compute_all_metrics(records_no_harness)
         metrics_with = compute_all_metrics(records_with_harness)
 
-        # The harness should catch some invalid actions before they reach the environment
-        # This means the environment sees fewer invalid actions
-        # But the harness doesn't fix the agent — it just rejects them earlier
-        assert "task_success_rate" in metrics_no
-        assert "task_success_rate" in metrics_with
+        assert metrics_with["task_success_rate"] > metrics_no["task_success_rate"]
+        assert metrics_with["task_success_rate"] > 0.0
+        assert metrics_with["invalid_action_rate"] < metrics_no["invalid_action_rate"]
 
     def test_policy_engine_remains_authoritative(self, test_scenarios, manual_harness_runtime):
         """Policy engine independently denies unauthorized actions.
@@ -142,20 +140,8 @@ class TestDeterministicExperiment:
                 harness_accepted_policy_denied += 1
 
         # Policy engine must be called for every action that passes the harness
-        harness_blocked = sum(
-            1 for r in records if r.harness_decision and not r.harness_decision.accepted
-        )
         policy_decisions = sum(1 for r in records if r.policy_decision is not None)
-        total = len(records)
-
-        # Every action either goes through policy or is blocked by harness
-        assert (
-            policy_decisions + harness_blocked == total
-        ), (
-            f"policy_decisions ({policy_decisions})"
-            f" + harness_blocked ({harness_blocked})"
-            f" != total ({total})"
-        )
+        assert policy_decisions == len(records), "Policy engine must be called for every action"
 
     def test_counterexamples_from_failures(self, test_scenarios):
         """Failures produce structured counterexamples."""
@@ -204,8 +190,7 @@ class TestDeterministicExperiment:
                     agent="test",
                     observation={},
                     proposed_action=Action(
-                        type="submit_expense",
-                        arguments={"expense_id": "exp-1"},
+                        type="submit_expense", arguments={"expense_id": "exp-1"}
                     ),
                     harness_decision=HarnessDecision(accepted=False, reason="reject all"),
                     execution_result=ExecutionResult(status="invalid_action", observation={}),
