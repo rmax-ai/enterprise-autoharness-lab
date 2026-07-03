@@ -67,9 +67,13 @@
   <div class="button-row">
     <Button href={githubHref} target="_blank" rel="noopener noreferrer">View on GitHub</Button>
     <Button variant="secondary" href={paperHref} target="_blank" rel="noopener noreferrer">
-      Read the Paper
+      Read the Research Paper
     </Button>
   </div>
+  <p class="attribution">
+    Based on <a href={paperHref} target="_blank" rel="noopener noreferrer">AutoHarness</a> (arXiv:2603.03329)
+    — applied here to enterprise AI workflows.
+  </p>
   <div class="hero-stats" aria-label="project metrics">
     <div class="stat-card">
       <span class="stat-value">175</span>
@@ -167,7 +171,7 @@
     <div class="button-row">
       <Button href={githubHref} target="_blank" rel="noopener noreferrer">View on GitHub</Button>
       <Button variant="secondary" href={paperHref} target="_blank" rel="noopener noreferrer">
-        Read the Paper
+        Read the Research Paper
       </Button>
     </div>
   </div>
@@ -229,6 +233,22 @@
     max-width: 760px;
     margin: 0 auto;
     font-size: 1.15rem;
+  }
+
+  .attribution {
+    margin-top: 1rem;
+    color: var(--slate-400);
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+  }
+
+  .attribution a {
+    color: var(--cyan-400);
+    text-decoration: none;
+  }
+
+  .attribution a:hover {
+    text-decoration: underline;
   }
 
   .button-row {
