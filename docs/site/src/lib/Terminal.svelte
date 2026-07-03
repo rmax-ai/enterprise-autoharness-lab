@@ -10,7 +10,7 @@
 
   <pre class="terminal-body"><code><span class="command">$ git clone https://github.com/rmax-ai/enterprise-autoharness-lab.git</span>
 <span class="command">$ cd enterprise-autoharness-lab &amp;&amp; uv sync --extra dev</span>
-<span class="command">$ uv run autoharness compare -e expense-approval -c no-harness,manual,generated</span>
+<span class="command">$ uv run autoharness compare -e expense-approval -c no-harness,manual -d test</span>
 
 <span class="output">&gt; Loaded 4 scenarios from scenarios/expense-approval/test.jsonl
 &gt;
@@ -20,7 +20,6 @@
 &gt; ├────────────┼──────────┼──────────┼──────────┼───────────┤
 &gt; │ no-harness │    0.0%  │  100.0%  │   0.0%   │    -0.50  │
 &gt; │ manual     │    0.0%  │  100.0%  │   0.0%   │    -0.50  │
-&gt; │ generated  │    0.0%  │  100.0%  │   0.0%   │    -0.50  │
 &gt; └────────────┴──────────┴──────────┴──────────┴───────────┘</span>
 
 <span class="command">$ uv run autoharness run-baseline -e expense-approval -a scripted</span>

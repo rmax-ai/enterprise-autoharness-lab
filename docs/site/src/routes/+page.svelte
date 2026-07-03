@@ -9,24 +9,24 @@
 
   const features = [
     {
-      title: "AST-Validated Sandboxing",
+      title: "Policy Engine Supremacy",
       description:
-        "Generated code is statically analyzed to block dangerous operations before runtime."
+        "A human-authored policy layer retains final authority. Generated guardrails predict validity; business rules decide."
     },
     {
-      title: "Counterexample Learning",
+      title: "Deterministic Reproducibility",
       description:
-        "Every invalid action becomes structured training data. The harness writes its own test suite."
+        "Every experiment is reproducible from config, seed, and code hash. No drifting behavior between runs."
     },
     {
-      title: "Environment Drift Detection",
+      title: "Counterexample Extraction",
       description:
-        "When business rules change, the system detects drift and re-synthesizes the harness automatically."
+        "Execution failures are captured as structured counterexamples — the raw material for synthesis."
     },
     {
-      title: "100% Reproducible",
+      title: "Harness Synthesis (planned)",
       description:
-        "No external LLMs required to run evaluations. Mock model clients ensure full determinism."
+        "LLM-powered generation of validation harness code from counterexamples. AST validation and sandbox execution on the roadmap."
     }
   ];
 
@@ -35,19 +35,22 @@
       icon: "💰",
       title: "Expense Approval",
       actions: "submit, approve, reject, escalate",
-      catches: ["self-approvals", "out-of-policy amounts", "missing receipts"]
+      catches: ["self-approvals", "out-of-policy amounts", "missing receipts"],
+      planned: false
     },
     {
       icon: "🎫",
       title: "Customer Support",
       actions: "assign, prioritize, resolve, refund",
-      catches: ["SLA violations", "unauthorized refunds", "invalid state transitions"]
+      catches: ["SLA violations", "unauthorized refunds"],
+      planned: true
     },
     {
       icon: "🚀",
       title: "Software Deployment",
-      actions: "create, approve, start, verify, rollback",
-      catches: ["production freezes", "unauthorized approvals", "rollback-tight scenarios"]
+      actions: "create, approve, start, rollback",
+      catches: ["production freezes", "unauthorized rollbacks"],
+      planned: true
     }
   ];
 </script>
@@ -76,16 +79,12 @@
   </p>
   <div class="hero-stats" aria-label="project metrics">
     <div class="stat-card">
-      <span class="stat-value">175</span>
-      <span class="stat-label">Tests across end-to-end scenarios</span>
+      <span class="stat-value">78</span>
+      <span class="stat-label">Tests, all passing</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value">3</span>
-      <span class="stat-label">Enterprise workflow environments</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-value">CLI</span>
-      <span class="stat-label">compare, synthesize, report, mutate</span>
+      <span class="stat-value">1</span>
+      <span class="stat-label">Environment (2 planned)</span>
     </div>
   </div>
 </section>
@@ -95,9 +94,10 @@
     <p class="eyebrow">The Governance Stack</p>
     <h2>Generated code. Not generated decisions.</h2>
     <p>
-      LLMs are excellent at writing code, but terrible at enforcing rules. AutoHarness physically
-      separates generation from execution. The LLM synthesizes an AST-validated Python harness that
-      runs in a sandbox. The policy engine always has the final say.
+      LLMs are excellent at writing code, but terrible at enforcing rules. AutoHarness
+      separates generation from execution. The LLM synthesizes harness code; a
+      human-authored policy engine gives the final ruling. AST validation and sandbox
+      execution keep generated code contained.
     </p>
   </div>
   <GovernanceStack />
@@ -142,6 +142,9 @@
         <div class="workflow-header">
           <span class="workflow-icon" aria-hidden="true">{workflow.icon}</span>
           <h3>{workflow.title}</h3>
+          {#if workflow.planned}
+            <span class="planned-badge">planned</span>
+          {/if}
         </div>
         <p class="meta-label">Actions</p>
         <p class="meta-value">{workflow.actions}</p>
@@ -159,7 +162,7 @@
 <section class="section">
   <div class="section-copy">
     <p class="eyebrow">CLI Demo</p>
-    <h2>One Command to Synthesis.</h2>
+    <h2>Try It Yourself.</h2>
   </div>
   <Terminal />
 </section>
@@ -261,9 +264,12 @@
 
   .hero-stats {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
     margin-top: 3rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .stat-card,
@@ -329,6 +335,16 @@
 
   .workflow-icon {
     font-size: 1.5rem;
+  }
+
+  .planned-badge {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--slate-400);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--slate-800);
   }
 
   .meta-label {
