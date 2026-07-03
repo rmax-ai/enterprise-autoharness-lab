@@ -8,24 +8,25 @@
     <span class="title">Terminal — autoharness</span>
   </div>
 
-  <pre class="terminal-body"><code><span class="command">$ pip install autoharness</span>
-<span class="command">$ autoharness synthesize --env expense_approval</span>
+  <pre class="terminal-body"><code><span class="command">$ git clone https://github.com/rmax-ai/enterprise-autoharness-lab.git</span>
+<span class="command">$ cd enterprise-autoharness-lab &amp;&amp; uv sync --extra dev</span>
+<span class="command">$ uv run autoharness compare -e expense-approval -c no-harness,manual,generated</span>
 
-<span class="output">&gt; Running noisy agent...                    [Done]
-&gt; 14 failures collected.
-&gt; Synthesizing harness (Iteration 1)...
-&gt; AST Validation...                          [Passed]
-&gt; Sandbox Testing...                         [Passed]
-&gt; Evaluating... Score: 0.847 (Improved)
-&gt; Harness promoted.                          [Active]</span>
+<span class="output">&gt; Loaded 4 scenarios from scenarios/expense-approval/test.jsonl
+&gt;
+&gt;                       Comparison: expense-approval (test)
+&gt; ┌────────────┬──────────┬──────────┬──────────┬───────────┐
+&gt; │ Condition  │ Success  │ Invalid  │ Policy   │ Composite │
+&gt; ├────────────┼──────────┼──────────┼──────────┼───────────┤
+&gt; │ no-harness │    0.0%  │  100.0%  │   0.0%   │    -0.50  │
+&gt; │ manual     │    0.0%  │  100.0%  │   0.0%   │    -0.50  │
+&gt; │ generated  │    0.0%  │  100.0%  │   0.0%   │    -0.50  │
+&gt; └────────────┴──────────┴──────────┴──────────┴───────────┘</span>
 
-<span class="command">$ autoharness compare --conditions no-harness,manual,generated</span>
+<span class="command">$ uv run autoharness run-baseline -e expense-approval -a scripted</span>
 
-<span class="output"> Condition            Success   Invalid   Composite
- ─────────────────────────────────────────────────
- no-harness           65.0%     35.0%     0.555
- manual               85.0%     10.0%     0.802
- generated            88.0%      5.0%     0.847</span></code></pre>
+<span class="output">&gt; &#123;&quot;task_success_rate&quot;: 1.0, &quot;invalid_action_rate&quot;: 0.0,</span>
+<span class="output">&gt;  &quot;composite_score&quot;: 1.0, &quot;total_actions&quot;: 4&#125;</span></code></pre>
 </div>
 
 <style>
