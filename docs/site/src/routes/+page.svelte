@@ -106,11 +106,11 @@
 <section class="section">
   <div class="section-copy">
     <p class="eyebrow">The Proof</p>
-    <h2>Production-Grade Convergence.</h2>
+    <h2>Benchmarking the Gap.</h2>
     <p>
-      Tested across 175 scenarios and three enterprise environments. The synthesis loop
-      consistently generates harnesses that outperform naked agents and rival human-authored
-      rules.
+      A noisy agent produces 100% invalid actions — the baseline chaos that motivates
+      this project. A scripted oracle achieves 100% success. AutoHarness bridges the gap:
+      synthesizing deterministic harness code that catches invalid actions before execution.
     </p>
   </div>
   <DataTable />
