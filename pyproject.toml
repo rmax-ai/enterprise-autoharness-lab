@@ -34,6 +34,10 @@ reporting = [
     "jinja2>=3.1",
     "matplotlib>=3.8",
 ]
+web = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+]
 
 [project.scripts]
 autoharness = "autoharness_lab.cli:app"
