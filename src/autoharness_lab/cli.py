@@ -186,8 +186,28 @@ def compare(
         elif condition == "generated":
             agent = _get_agent("noisy", seed=seed)
             harness = _load_harness_runtime(environment, "latest")
-        elif condition == "large-model":
-            # Placeholder — uses noisy agent as proxy
+        elif condition == "gemini":
+            try:
+                agent = _get_agent("gemini", seed=seed)
+            except Exception as e:
+                console.print(
+                    f"[red]Gemini agent unavailable: {e}[/red]"
+                )
+                console.print(
+                    "[dim]Set GEMINI_API_KEY env var to use the LLM agent.[/dim]"
+                )
+                continue
+            harness = None
+        elif condition == "gemini-harness":
+            try:
+                agent = _get_agent("gemini", seed=seed)
+            except Exception as e:
+                console.print(
+                    f"[red]Gemini agent unavailable: {e}[/red]"
+                )
+                continue
+            harness = _load_harness_runtime(environment, "manual")
+        elif condition == "scripted":
             agent = _get_agent("scripted", seed=seed)
             harness = None
         else:

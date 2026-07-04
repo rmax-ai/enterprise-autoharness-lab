@@ -98,26 +98,38 @@
       <tr class="generated">
         <td><span class="condition-label">Noisy Agent</span> <span class="sub">+ manual harness</span></td>
         <td class="mid">77.8%</td>
-        <td class="warn">19.1%</td>
-        <td class="warn">73.0%</td>
+        <td class="bad">92.1%</td>
+        <td class="highlight">0.0%</td>
         <td>
           <div class="score-cell">
-            <span>0.609</span>
-            <span class="bar"><span style="width: 61%"></span></span>
+            <span>0.317</span>
+            <span class="bar"><span style="width: 32%"></span></span>
           </div>
         </td>
         <td class="mono">89</td>
+      </tr>
+      <tr class="generated">
+        <td><span class="condition-label">Scripted Agent</span> <span class="sub">deterministic baseline</span></td>
+        <td class="mid">33.3%</td>
+        <td class="highlight">0.0%</td>
+        <td class="bad">97.6%</td>
+        <td>
+          <div class="score-cell">
+            <span>0.236</span>
+            <span class="bar"><span style="width: 24%"></span></span>
+          </div>
+        </td>
+        <td class="mono">123</td>
       </tr>
     </tbody>
   </table>
 
   <footer class="table-footer">
-    Unlike expense approval, the noise here hits a rich policy surface: 73% of
-    actions are denied by business rules (self-assignment, unauthorized refunds,
-    critical resolution without manager approval). The harness currently mirrors
-    the environment — same numbers — because the policy engine is the real
-    differentiator. The gap to close is between noisy policy violations and a
-    policy-aware harness.
+    Without a harness, 73% of actions hit policy denial (self-assignment,
+    unauthorized refunds, critical resolution). With the manual harness, 92.1%
+    of actions are blocked <em>before</em> reaching the policy engine — it catches
+    invalid operations earlier in the pipeline. The gap: 7.9% of actions still
+    pass the harness but fail downstream — the exact surface synthesis targets.
   </footer>
 </section>
 

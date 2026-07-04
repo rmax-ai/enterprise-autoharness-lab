@@ -141,10 +141,21 @@ class TestDeterministicExperiment:
             ):
                 harness_accepted_policy_denied += 1
 
-        # We may or may not find such cases depending on the seed,
-        # but the important thing is that the policy engine is always called
+        # Policy engine must be called for every action that passes the harness
+        harness_blocked = sum(
+            1 for r in records if r.harness_decision and not r.harness_decision.accepted
+        )
         policy_decisions = sum(1 for r in records if r.policy_decision is not None)
-        assert policy_decisions == len(records), "Policy engine must be called for every action"
+        total = len(records)
+
+        # Every action either goes through policy or is blocked by harness
+        assert (
+            policy_decisions + harness_blocked == total
+        ), (
+            f"policy_decisions ({policy_decisions})"
+            f" + harness_blocked ({harness_blocked})"
+            f" != total ({total})"
+        )
 
     def test_counterexamples_from_failures(self, test_scenarios):
         """Failures produce structured counterexamples."""

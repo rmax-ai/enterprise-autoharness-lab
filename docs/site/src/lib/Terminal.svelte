@@ -8,7 +8,7 @@
     <span class="title">Terminal — expense-approval</span>
   </div>
 
-  <pre class="terminal-body"><code><span class="command">$ uv run autoharness compare -e expense-approval -c no-harness,manual -d test</span>
+  <pre class="terminal-body"><code><span class="command">$ uv run autoharness compare -e expense-approval -c no-harness,manual,scripted -d test</span>
 
 <span class="output">&gt; Loaded 9 scenarios from scenarios/expense-approval/test.jsonl
 &gt;
@@ -19,17 +19,8 @@
 &gt; ┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━┩
 &gt; │ no-harness │ 0.0%         │ 100.0%       │ 0.0%        │ -0.500    │ 180     │
 &gt; │ manual     │ 0.0%         │ 100.0%       │ 0.0%        │ -0.500    │ 180     │
-&gt; └────────────┴──────────────┴──────────────┴─────────────┴───────────┴─────────┘</span>
-
-<span class="command">$ uv run autoharness run-baseline -e expense-approval -a scripted -d test</span>
-
-<span class="output">&gt; &#123;
-&gt;   "task_success_rate": 1.0,
-&gt;   "invalid_action_rate": 0.0,
-&gt;   "policy_denial_rate": 0.0,
-&gt;   "composite_score": 1.0,
-&gt;   "total_actions": 9
-&gt; &#125;</span></code></pre>
+&gt; │ scripted   │ 100.0%       │ 0.0%         │ 0.0%        │ 1.000     │ 9       │
+&gt; └────────────┴──────────────┴──────────────┴─────────────┴───────────┴─────────┘</span></code></pre>
 </div>
 
 <div class="terminal margin-top">
@@ -42,7 +33,7 @@
     <span class="title">Terminal — support-ticket</span>
   </div>
 
-  <pre class="terminal-body"><code><span class="command">$ uv run autoharness compare -e support-ticket -c no-harness,manual -d test</span>
+  <pre class="terminal-body"><code><span class="command">$ uv run autoharness compare -e support-ticket -c no-harness,manual,scripted -d test</span>
 
 <span class="output">&gt; Loaded 9 scenarios from scenarios/support-ticket/test.jsonl
 &gt;
@@ -52,7 +43,8 @@
 &gt; ┃ Condition  ┃ Success Rate ┃ Invalid Rate ┃ Denial      ┃ Composite ┃ Actions ┃
 &gt; ┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━┩
 &gt; │ no-harness │ 77.8%        │ 19.1%        │ 73.0%       │ 0.609     │ 89      │
-&gt; │ manual     │ 77.8%        │ 19.1%        │ 73.0%       │ 0.609     │ 89      │
+&gt; │ manual     │ 77.8%        │ 92.1%        │ 0.0%        │ 0.317     │ 89      │
+&gt; │ scripted   │ 33.3%        │ 0.0%         │ 97.6%       │ 0.236     │ 123     │
 &gt; └────────────┴──────────────┴──────────────┴─────────────┴───────────┴─────────┘</span></code></pre>
 </div>
 

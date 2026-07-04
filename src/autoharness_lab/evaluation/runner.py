@@ -203,6 +203,30 @@ def run_experiment(
                 )
                 harness_decision = HarnessDecision(**harness_result)
 
+                # Harness rejection blocks the action before policy/environment
+                if not harness_decision.accepted:
+                    result = ExecutionResult(
+                        status="invalid_action",
+                        observation=observation,
+                        error_code="HARNESS_REJECTED",
+                        message=f"Harness rejected: {harness_decision.reason}",
+                    )
+                    all_records.append(
+                        AttemptRecord(
+                            run_id=run_id,
+                            scenario_id=scenario.scenario_id,
+                            environment=env.name,
+                            agent=agent.name,
+                            observation=observation,
+                            proposed_action=proposed_action,
+                            harness_decision=harness_decision,
+                            policy_decision=None,
+                            execution_result=result,
+                            step_index=step,
+                        )
+                    )
+                    continue
+
             # Policy engine evaluates
             # Detect domain entity from observation structure
             entity = None
