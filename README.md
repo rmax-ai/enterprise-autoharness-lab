@@ -46,24 +46,49 @@ uv run autoharness --help
 ## CLI Commands
 
 ```bash
+# List available workflow environments
 uv run autoharness list-environments
-uv run autoharness run-baseline --environment expense-approval --agent noisy --dataset test
-uv run autoharness synthesize --environment expense-approval --agent noisy --iterations 10
-uv run autoharness evaluate --environment expense-approval --agent noisy --harness latest --dataset test
-uv run autoharness compare --environment expense-approval --conditions no-harness,manual,generated
-uv run autoharness mutate --environment expense-approval --mutation approval-threshold-change
-uv run autoharness report --experiment-id <id>
-uv run autoharness inspect-harness --environment expense-approval --version 3
+
+# Run a single baseline experiment
+uv run autoharness run-baseline \
+  --environment expense-approval \
+  --agent noisy \
+  --dataset test
+
+# Compare agent performance across conditions
+uv run autoharness compare \
+  --environment expense-approval \
+  --conditions no-harness,manual
+
+uv run autoharness compare \
+  --environment support-ticket \
+  --conditions no-harness,manual,scripted \
+  --dataset test
+
+uv run autoharness compare \
+  --environment deployment \
+  --conditions no-harness,manual,scripted \
+  --dataset test
 ```
 
-## Experimental Conditions
+## Agent Types
+
+| Agent | Description |
+|-------|-------------|
+| `noisy` | Deliberately weak agent — produces invalid actions at configurable rates for reproducible failure generation |
+| `scripted` | Deterministic baseline — always produces valid, policy-compliant actions |
+| `gemini` | LLM-backed agent using Gemini 2.5 Flash (requires `GEMINI_API_KEY`) |
+
+## Conditions
+
+Conditions specifiable via `--conditions` / `-c` on `compare`:
 
 | Condition | Description |
 |-----------|-------------|
-| Small model, no harness | Baseline — unassisted agent |
-| Small model, manual harness | Hand-written validation code |
-| Small model, generated harness | Auto-synthesized harness |
-| Large model, no harness | Scale comparison baseline |
+| `no-harness` | Agent runs without any harness |
+| `manual` | Agent runs with a hand-written validation harness |
+| `scripted` | Scripted agent as deterministic upper bound |
+| `generated` | Agent runs with the latest generated harness (requires prior synthesis — see roadmap) |
 
 ## Documentation
 
@@ -78,4 +103,6 @@ MIT
 
 ## Status
 
-Research prototype. Not production-ready.
+Research prototype. Not production-ready. Milestone 1 (deterministic research kernel) complete.
+Milestones 2–5 (harness synthesis, reporting, mutation testing) are on the roadmap
+but not yet implemented as CLI commands.
