@@ -133,6 +133,76 @@
   </footer>
 </section>
 
+<section class="table-shell margin-top" aria-label="Performance comparison — deployment">
+  <header class="table-header">
+    <p class="eyebrow">Benchmark Results</p>
+    <h3>Software Deployment (test set, 9 scenarios)</h3>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Condition</th>
+        <th>Success Rate</th>
+        <th>Invalid Rate</th>
+        <th>Policy Denial</th>
+        <th>Composite Score</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="condition-label">Noisy Agent</span> <span class="sub">no harness</span></td>
+        <td class="mid">88.9%</td>
+        <td class="warn">12.9%</td>
+        <td class="bad">61.3%</td>
+        <td>
+          <div class="score-cell">
+            <span>0.763</span>
+            <span class="bar"><span style="width: 76%"></span></span>
+          </div>
+        </td>
+        <td class="mono">31</td>
+      </tr>
+      <tr>
+        <td><span class="condition-label">Noisy Agent</span> <span class="sub">+ manual harness</span></td>
+        <td class="mid">88.9%</td>
+        <td class="bad">29.0%</td>
+        <td class="warn">45.2%</td>
+        <td>
+          <div class="score-cell">
+            <span>−0.574</span>
+            <span class="bar"><span style="width: 0%"></span></span>
+          </div>
+        </td>
+        <td class="mono">31</td>
+      </tr>
+      <tr class="generated">
+        <td><span class="condition-label">Scripted Agent</span> <span class="sub">deterministic baseline</span></td>
+        <td class="mid">88.9%</td>
+        <td class="highlight">0.0%</td>
+        <td class="bad">71.4%</td>
+        <td>
+          <div class="score-cell">
+            <span>0.817</span>
+            <span class="bar"><span style="width: 82%"></span></span>
+          </div>
+        </td>
+        <td class="mono">28</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <footer class="table-footer">
+    The manual harness <em>degrades</em> performance here — it blocks valid
+    deployment approvals (29% invalid rate vs 12.9% without it), dropping the
+    composite score from 0.763 to −0.574. This is a real harness bug: production
+    approval checks are incorrectly rejecting legitimate workflows. The scripted
+    oracle achieves zero invalid actions but still hits 71.4% policy denial from
+    production freezes and approval gates.
+  </footer>
+</section>
+
 <style>
   .table-shell {
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));

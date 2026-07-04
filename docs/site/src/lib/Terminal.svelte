@@ -48,6 +48,31 @@
 &gt; └────────────┴──────────────┴──────────────┴─────────────┴───────────┴─────────┘</span></code></pre>
 </div>
 
+<div class="terminal margin-top">
+  <div class="terminal-bar">
+    <div class="dots" aria-hidden="true">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+    </div>
+    <span class="title">Terminal — deployment</span>
+  </div>
+
+  <pre class="terminal-body"><code><span class="command">$ uv run autoharness compare -e deployment -c no-harness,manual,scripted -d test</span>
+
+<span class="output">&gt; Loaded 9 scenarios from scenarios/deployment/test.jsonl
+&gt;
+&gt;                          Comparison: deployment (test)
+&gt; ┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━┓
+&gt; ┃            ┃              ┃              ┃ Policy      ┃           ┃         ┃
+&gt; ┃ Condition  ┃ Success Rate ┃ Invalid Rate ┃ Denial      ┃ Composite ┃ Actions ┃
+&gt; ┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━┩
+&gt; │ no-harness │ 88.9%        │ 12.9%        │ 61.3%       │ 0.763     │ 31      │
+&gt; │ manual     │ 88.9%        │ 29.0%        │ 45.2%       │ −0.574    │ 31      │
+&gt; │ scripted   │ 88.9%        │ 0.0%         │ 71.4%       │ 0.817     │ 28      │
+&gt; └────────────┴──────────────┴──────────────┴─────────────┴───────────┴─────────┘</span></code></pre>
+</div>
+
 <style>
   .terminal {
     background: var(--slate-900);
