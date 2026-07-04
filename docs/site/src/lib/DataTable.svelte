@@ -2,9 +2,6 @@
   <header class="table-header">
     <p class="eyebrow">Benchmark Results</p>
     <h3>Expense Approval (test set, 9 scenarios)</h3>
-    <p class="results-link">
-      Raw data: <a href="https://github.com/rmax-ai/enterprise-autoharness-lab/tree/main/docs/benchmarks" target="_blank" rel="noopener">docs/benchmarks/</a>
-    </p>
   </header>
 
   <table>
@@ -156,22 +153,6 @@
     font-size: 1.15rem;
     color: var(--slate-50);
     margin: 0 0 0.25rem;
-  }
-
-  .results-link {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--slate-400);
-  }
-
-  .results-link a {
-    color: var(--cyan-400);
-    text-decoration: none;
-    font-family: var(--font-mono);
-  }
-
-  .results-link a:hover {
-    text-decoration: underline;
   }
 
   table {

@@ -19,9 +19,9 @@
         "Every experiment is reproducible from config, seed, and code hash. No drifting behavior between runs."
     },
     {
-      title: "Counterexample Extraction",
+      title: "Counterexample Extraction (planned)",
       description:
-        "Execution failures are captured as structured counterexamples — the raw material for synthesis."
+        "Execution failures captured as structured counterexamples — the raw material for synthesis. Model defined, extraction pipeline on the roadmap."
     },
     {
       title: "Harness Synthesis (planned)",
@@ -34,7 +34,7 @@
     {
       icon: "💰",
       title: "Expense Approval",
-      actions: "submit, approve, reject, escalate",
+      actions: "submit, request_receipt, approve, reject, escalate",
       catches: ["self-approvals", "out-of-policy amounts", "missing receipts"],
       planned: false
     },
@@ -63,9 +63,10 @@
   <p class="eyebrow">Open-Source Research Project</p>
   <h1>Deterministic Guardrails for Enterprise AI.</h1>
   <p class="hero-copy">
-    Stop relying on prompt engineering for safety. AutoHarness uses LLMs to synthesize
-    deterministic validation code. The AI writes the harness, the sandbox runs it, and your
-    policy engine retains ultimate authority.
+    Stop relying on prompt engineering for safety. AutoHarness validates AI agent
+    actions against human-authored policy engines. Manual harnesses catch invalid
+    actions today; LLM-powered synthesis of validation code from failure traces is
+    on the roadmap.
   </p>
   <div class="button-row">
     <Button href={githubHref} target="_blank" rel="noopener noreferrer">View on GitHub</Button>
@@ -79,7 +80,7 @@
   </p>
   <div class="hero-stats" aria-label="project metrics">
     <div class="stat-card">
-      <span class="stat-value">137</span>
+      <span class="stat-value">166</span>
       <span class="stat-label">Tests, all passing</span>
     </div>
     <div class="stat-card">
@@ -96,8 +97,8 @@
     <p>
       LLMs are excellent at writing code, but terrible at enforcing rules. AutoHarness
       separates generation from execution. The LLM synthesizes harness code; a
-      human-authored policy engine gives the final ruling. AST validation and sandbox
-      execution keep generated code contained.
+      human-authored policy engine gives the final ruling. Deterministic
+      reproducibility is guaranteed through seeded execution and config hashing.
     </p>
   </div>
   <GovernanceStack />
@@ -108,10 +109,11 @@
     <p class="eyebrow">The Proof</p>
     <h2>Benchmarking the Gap.</h2>
     <p>
-      Across expense approval and customer support workflows, a noisy agent
-      produces the failure corpus. A scripted oracle represents the deterministic
-      upper bound. The policy engine remains authoritative throughout — catching
-      self-approvals, unauthorized refunds, SLA violations, and critical escalations.
+      Across expense approval, customer support, and software deployment
+      workflows, a noisy agent produces the failure corpus. A scripted oracle
+      represents the deterministic upper bound. The policy engine remains
+      authoritative throughout — catching self-approvals, unauthorized refunds,
+      SLA violations, production freezes, and unauthorized rollbacks.
     </p>
   </div>
   <DataTable />
