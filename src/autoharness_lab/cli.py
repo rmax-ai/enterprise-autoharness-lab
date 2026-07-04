@@ -16,6 +16,9 @@ from autoharness_lab.agents.scripted import ScriptedAgent
 from autoharness_lab.environments.expense_approval import (
     ExpenseApprovalEnvironment,
 )
+from autoharness_lab.environments.support_ticket import (
+    SupportTicketEnvironment,
+)
 from autoharness_lab.evaluation.runner import (
     compute_all_metrics,
     load_scenarios,
@@ -23,6 +26,7 @@ from autoharness_lab.evaluation.runner import (
 )
 from autoharness_lab.harness.contracts import HarnessRuntime
 from autoharness_lab.policy.expense import ExpensePolicyEngine
+from autoharness_lab.policy.support import SupportPolicyEngine
 
 app = typer.Typer(help="Enterprise AutoHarness Lab CLI")
 console = Console()
@@ -38,6 +42,7 @@ def _get_environment(name: str):
     """Get an environment factory by name."""
     environments = {
         "expense-approval": lambda: ExpenseApprovalEnvironment(),
+        "support-ticket": lambda: SupportTicketEnvironment(),
     }
     if name not in environments:
         console.print(f"[red]Unknown environment: {name}[/red]")
@@ -62,19 +67,34 @@ def _get_agent(name: str, seed: int = 42):
 
 def _get_policy_engine(environment: str):
     """Get a policy engine by environment name."""
-    if environment == "expense-approval":
-        return ExpensePolicyEngine()
-    raise typer.Exit(1)
+    engines = {
+        "expense-approval": ExpensePolicyEngine,
+        "support-ticket": SupportPolicyEngine,
+    }
+    if environment not in engines:
+        console.print(f"[red]Unknown environment for policy: {environment}[/red]")
+        raise typer.Exit(1)
+    return engines[environment]()
 
 
 def _load_harness_runtime(environment: str, version: str | None = None) -> HarnessRuntime | None:
     """Load a harness runtime. Returns None if no harness available."""
-    if version == "manual" or version == "latest":
-        # Import manual harness
+    if version in ("manual", "latest"):
+        harness_paths = {
+            "expense-approval": (
+                REPO_ROOT / "src/autoharness_lab/harness/manual/expense_approval.py"
+            ),
+            "support-ticket": (
+                REPO_ROOT / "src/autoharness_lab/harness/manual/support_ticket.py"
+            ),
+        }
+        harness_path = harness_paths.get(environment)
+        if harness_path is None or not harness_path.exists():
+            console.print(f"[yellow]No manual harness for environment: {environment}[/yellow]")
+            return None
         import importlib.util
         import sys
 
-        harness_path = REPO_ROOT / "src/autoharness_lab/harness/manual/expense_approval.py"
         spec = importlib.util.spec_from_file_location("manual_harness", harness_path)
         if spec and spec.loader:
             module = importlib.util.module_from_spec(spec)
@@ -100,7 +120,7 @@ def list_environments():
         "submit, request_receipt, approve, reject, escalate",
         "✓ ready",
     )
-    table.add_row("support-ticket", "assign, priority, resolve, refund, escalate", "⏳ planned")
+    table.add_row("support-ticket", "assign, set_priority, resolve, refund, escalate", "✓ ready")
     table.add_row("deployment", "create, approve, start, cancel, rollback", "⏳ planned")
 
     console.print(table)

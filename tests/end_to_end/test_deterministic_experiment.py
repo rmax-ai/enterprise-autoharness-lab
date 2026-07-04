@@ -4,6 +4,10 @@ Runs without any external LLM. Uses the manual harness and noisy agent
 to demonstrate the full AutoHarness loop.
 """
 
+import importlib.util
+import sys
+from pathlib import Path
+
 import pytest
 
 from autoharness_lab.agents.noisy import NoisyAgent
@@ -17,10 +21,6 @@ from autoharness_lab.evaluation.runner import (
 from autoharness_lab.harness.contracts import HarnessRuntime
 from autoharness_lab.policy.expense import ExpensePolicyEngine
 from autoharness_lab.storage.traces import extract_counterexamples
-
-import importlib.util
-import sys
-from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HARNESS_PATH = REPO_ROOT / "src/autoharness_lab/harness/manual/expense_approval.py"
@@ -107,7 +107,8 @@ class TestDeterministicExperiment:
         # The harness should catch some invalid actions before they reach the environment
         # This means the environment sees fewer invalid actions
         # But the harness doesn't fix the agent — it just rejects them earlier
-        assert "no-harness" in metrics_no or True  # Both conditions should run
+        assert "task_success_rate" in metrics_no
+        assert "task_success_rate" in metrics_with
 
     def test_policy_engine_remains_authoritative(self, test_scenarios, manual_harness_runtime):
         """Policy engine independently denies unauthorized actions.
@@ -143,9 +144,7 @@ class TestDeterministicExperiment:
         # We may or may not find such cases depending on the seed,
         # but the important thing is that the policy engine is always called
         policy_decisions = sum(1 for r in records if r.policy_decision is not None)
-        assert policy_decisions == len(records), (
-            "Policy engine must be called for every action"
-        )
+        assert policy_decisions == len(records), "Policy engine must be called for every action"
 
     def test_counterexamples_from_failures(self, test_scenarios):
         """Failures produce structured counterexamples."""
@@ -193,13 +192,12 @@ class TestDeterministicExperiment:
                     environment="expense-approval",
                     agent="test",
                     observation={},
-                    proposed_action=Action(type="submit_expense", arguments={"expense_id": "exp-1"}),
-                    harness_decision=HarnessDecision(
-                        accepted=False, reason="reject all"
+                    proposed_action=Action(
+                        type="submit_expense",
+                        arguments={"expense_id": "exp-1"},
                     ),
-                    execution_result=ExecutionResult(
-                        status="invalid_action", observation={}
-                    ),
+                    harness_decision=HarnessDecision(accepted=False, reason="reject all"),
+                    execution_result=ExecutionResult(status="invalid_action", observation={}),
                     step_index=i,
                 )
             )
@@ -207,12 +205,11 @@ class TestDeterministicExperiment:
         score = compute_composite_score(records)
         # Reject-all harness: all actions rejected → no task success
         # + high false_rejection_rate penalty
-        assert score < 0.0, (
-            f"Reject-all harness must score below 0, got {score}"
-        )
+        assert score < 0.0, f"Reject-all harness must score below 0, got {score}"
 
     def test_deterministic_reproducibility(self, test_scenarios):
         """Same seed produces identical results."""
+
         def env_factory():
             return ExpenseApprovalEnvironment()
 

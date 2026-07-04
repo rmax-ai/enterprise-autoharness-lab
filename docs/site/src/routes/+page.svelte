@@ -41,9 +41,9 @@
     {
       icon: "🎫",
       title: "Customer Support",
-      actions: "assign, prioritize, resolve, refund",
-      catches: ["SLA violations", "unauthorized refunds"],
-      planned: true
+      actions: "assign, prioritize, resolve, refund, escalate",
+      catches: ["self-assignment", "unauthorized refunds", "critical resolution"],
+      planned: false
     },
     {
       icon: "🚀",
@@ -79,12 +79,12 @@
   </p>
   <div class="hero-stats" aria-label="project metrics">
     <div class="stat-card">
-      <span class="stat-value">78</span>
+      <span class="stat-value">137</span>
       <span class="stat-label">Tests, all passing</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value">1</span>
-      <span class="stat-label">Environment (2 planned)</span>
+      <span class="stat-value">2</span>
+      <span class="stat-label">Environments (1 planned)</span>
     </div>
   </div>
 </section>
@@ -108,9 +108,10 @@
     <p class="eyebrow">The Proof</p>
     <h2>Benchmarking the Gap.</h2>
     <p>
-      A noisy agent produces 100% invalid actions — the baseline chaos that motivates
-      this project. A scripted oracle achieves 100% success. AutoHarness bridges the gap:
-      synthesizing deterministic harness code that catches invalid actions before execution.
+      Across expense approval and customer support workflows, a noisy agent
+      produces the failure corpus. A scripted oracle represents the deterministic
+      upper bound. The policy engine remains authoritative throughout — catching
+      self-approvals, unauthorized refunds, SLA violations, and critical escalations.
     </p>
   </div>
   <DataTable />

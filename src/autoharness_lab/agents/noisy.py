@@ -89,6 +89,18 @@ class NoisyAgent:
         available_actions: list[str],
     ) -> Action:
         """Propose an action, sometimes incorrectly."""
+        # Detect domain from observation structure
+        if "tickets" in observation:
+            return self._propose_ticket_action(task, observation, available_actions)
+        return self._propose_expense_action(task, observation, available_actions)
+
+    def _propose_expense_action(
+        self,
+        task: str,
+        observation: dict[str, Any],
+        available_actions: list[str],
+    ) -> Action:
+        """Noisy expense-approval action proposal."""
         expenses = observation.get("expenses", {})
         actor = task.split("_")[0] if "_" in task else "noisy"
 
@@ -104,26 +116,22 @@ class NoisyAgent:
             state = exp.get("state", "")
 
             if state == "draft":
-                # Missing fields?
                 if self._rng.random() < self.missing_fields_rate:
                     return Action(
                         type="submit_expense",
-                        arguments={},  # Missing expense_id
+                        arguments={},
                     )
-
                 return Action(
                     type="submit_expense",
                     arguments={"expense_id": eid},
                 )
 
             if state == "submitted":
-                # Self-approval?
                 if self._rng.random() < self.self_approval_rate:
                     return Action(
                         type="approve_expense",
                         arguments={"expense_id": eid, "actor": exp.get("submitter", actor)},
                     )
-
                 return Action(
                     type="approve_expense",
                     arguments={"expense_id": eid, "actor": actor},
@@ -138,5 +146,74 @@ class NoisyAgent:
                         arguments={"expense_id": eid, "actor": actor},
                     )
 
-        # Fallback: valid action
         return Action(type="submit_expense", arguments={"expense_id": "exp-0001", "actor": actor})
+
+    def _propose_ticket_action(
+        self,
+        task: str,
+        observation: dict[str, Any],
+        available_actions: list[str],
+    ) -> Action:
+        """Noisy support-ticket action proposal."""
+        tickets = observation.get("tickets", {})
+        actor = task.split("_")[0] if "_" in task else "noisy"
+
+        error_types = [
+            "assign_ticket",
+            "set_priority",
+            "resolve_ticket",
+            "refund_customer",
+            "escalate_ticket",
+        ]
+
+        # ── Wrong action type ────────────────────────────────────
+        if self._rng.random() < self.wrong_type_rate:
+            return Action(
+                type="invalid_action_type_xyz",
+                arguments={"ticket_id": "tkt-0001"},
+            )
+
+        # ── Missing fields ───────────────────────────────────────
+        if self._rng.random() < self.missing_fields_rate:
+            action_type = self._rng.choice(error_types)
+            return Action(
+                type=action_type,
+                arguments={},
+            )
+
+        # ── Operate on first available ticket ────────────────────
+        for tid, tkt in tickets.items():
+            state = tkt.get("state", "")
+
+            if state == "new":
+                assignee = (
+                    tkt.get("customer", actor)
+                    if self._rng.random() < self.self_approval_rate
+                    else "agent_bob"
+                )
+                return Action(
+                    type="assign_ticket",
+                    arguments={"ticket_id": tid, "assignee": assignee},
+                )
+
+            if state in ("assigned", "in_progress"):
+                if self._rng.random() < 0.3:
+                    return Action(
+                        type="set_priority",
+                        arguments={"ticket_id": tid, "priority": "high"},
+                    )
+                return Action(
+                    type="resolve_ticket",
+                    arguments={"ticket_id": tid, "resolution": "Done"},
+                )
+
+        # ── Invalid state ────────────────────────────────────────
+        if self._rng.random() < self.invalid_state_rate:
+            for tid, tkt in tickets.items():
+                if tkt.get("state") == "resolved":
+                    return Action(
+                        type="resolve_ticket",
+                        arguments={"ticket_id": tid},
+                    )
+
+        return Action(type="assign_ticket", arguments={"ticket_id": "tkt-0001", "assignee": actor})

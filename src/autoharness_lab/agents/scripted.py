@@ -1,6 +1,6 @@
 """Deterministic baseline agent.
 
-Always produces valid actions for known expense approval scenarios.
+Always produces valid actions for known scenarios across environments.
 Used to verify environments and harnesses work correctly.
 """
 
@@ -14,8 +14,8 @@ from autoharness_lab.models import Action
 class ScriptedAgent:
     """Deterministic baseline agent.
 
-    Follows a fixed policy: submit drafts, approve submitted items.
-    Always produces structurally valid actions.
+    Follows a fixed policy: detects domain from observation structure
+    and takes the next correct step.
     """
 
     name = "scripted"
@@ -27,12 +27,22 @@ class ScriptedAgent:
         available_actions: list[str],
     ) -> Action:
         """Propose the next action based on a fixed policy."""
+        # Detect domain from observation structure
+        if "tickets" in observation:
+            return self._propose_ticket_action(task, observation, available_actions)
+        return self._propose_expense_action(task, observation, available_actions)
+
+    def _propose_expense_action(
+        self,
+        task: str,
+        observation: dict[str, Any],
+        available_actions: list[str],
+    ) -> Action:
+        """Expense-approval fixed policy."""
         expenses = observation.get("expenses", {})
 
-        # Find first expense in draft state → submit it
         for eid, exp in expenses.items():
             if exp.get("state") == "draft":
-                # If needs receipt, request it first
                 if exp.get("amount", 0) > 50 and not exp.get("has_receipt", False):
                     return Action(type="request_receipt", arguments={"expense_id": eid})
                 return Action(
@@ -40,10 +50,8 @@ class ScriptedAgent:
                     arguments={"expense_id": eid, "actor": "scripted"},
                 )
 
-        # Find first expense in submitted state → approve it (as manager)
         for eid, exp in expenses.items():
             if exp.get("state") == "submitted":
-                # Don't self-approve
                 if exp.get("submitter") == "scripted":
                     continue
                 return Action(
@@ -51,5 +59,49 @@ class ScriptedAgent:
                     arguments={"expense_id": eid, "actor": "scripted"},
                 )
 
-        # Nothing to do
         return Action(type="submit_expense", arguments={"expense_id": "none"})
+
+    def _propose_ticket_action(
+        self,
+        task: str,
+        observation: dict[str, Any],
+        available_actions: list[str],
+    ) -> Action:
+        """Support-ticket fixed policy."""
+        tickets = observation.get("tickets", {})
+
+        # Step 1: Assign new tickets
+        for tid, tkt in tickets.items():
+            if tkt.get("state") == "new":
+                return Action(
+                    type="assign_ticket",
+                    arguments={"ticket_id": tid, "assignee": "agent_bob"},
+                )
+
+        # Step 2: Set priority on unprioritized tickets
+        for tid, tkt in tickets.items():
+            if tkt.get("state") in ("assigned", "in_progress") and tkt.get("priority") == "low":
+                return Action(
+                    type="set_priority",
+                    arguments={"ticket_id": tid, "priority": "medium"},
+                )
+
+        # Step 3: Resolve assigned tickets
+        for tid, tkt in tickets.items():
+            if tkt.get("state") in ("assigned", "in_progress"):
+                return Action(
+                    type="resolve_ticket",
+                    arguments={"ticket_id": tid, "resolution": "Issue resolved"},
+                )
+
+        # Step 4: Escalate critical unresolved
+        for tid, tkt in tickets.items():
+            if tkt.get("state") not in ("resolved", "closed", "escalated") and tkt.get(
+                "priority"
+            ) == "critical":
+                return Action(
+                    type="escalate_ticket",
+                    arguments={"ticket_id": tid},
+                )
+
+        return Action(type="resolve_ticket", arguments={"ticket_id": "none"})

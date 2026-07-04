@@ -1,14 +1,13 @@
 """Unit tests for manual harness and harness contracts."""
 
-import pytest
-
-from autoharness_lab.harness.contracts import HarnessRuntime
-
-
 # Import the manual harness module directly
 import importlib.util
 import sys
 from pathlib import Path
+
+import pytest
+
+from autoharness_lab.harness.contracts import HarnessRuntime
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HARNESS_PATH = REPO_ROOT / "src/autoharness_lab/harness/manual/expense_approval.py"
@@ -153,6 +152,7 @@ class TestHarnessRuntime:
     def test_handles_harness_error_gracefully(self):
         """Runtime should not crash if harness throws."""
         import types
+
         module = types.ModuleType("broken")
 
         def broken_evaluate(obs, action):

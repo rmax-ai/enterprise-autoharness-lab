@@ -1,8 +1,8 @@
 install:
-	pip install -r requirements.txt
+	uv sync
 
 dev:
-	uvicorn main:app --reload
+	uv run uvicorn main:app --reload
 
 check:
-	python3 -c "from main import app; print('FastAPI app loaded OK')"
+	uv run python -c "from main import app; print('FastAPI app loaded OK')"

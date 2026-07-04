@@ -204,16 +204,38 @@ def run_experiment(
                 harness_decision = HarnessDecision(**harness_result)
 
             # Policy engine evaluates
-            expense_id = proposed_action.arguments.get("expense_id")
-            expense_state = observation.get("expenses", {}).get(expense_id)
-            policy_decision = policy_engine.evaluate(
-                actor=scenario.actor,
-                action={
-                    "type": proposed_action.type,
-                    "arguments": proposed_action.arguments,
-                },
-                expense=expense_state,
-            )
+            # Detect domain entity from observation structure
+            entity = None
+            if "expenses" in observation:
+                entity_id = proposed_action.arguments.get("expense_id")
+                entity = observation.get("expenses", {}).get(entity_id)
+                policy_decision = policy_engine.evaluate(
+                    actor=scenario.actor,
+                    action={
+                        "type": proposed_action.type,
+                        "arguments": proposed_action.arguments,
+                    },
+                    expense=entity,
+                )
+            elif "tickets" in observation:
+                entity_id = proposed_action.arguments.get("ticket_id")
+                entity = observation.get("tickets", {}).get(entity_id)
+                policy_decision = policy_engine.evaluate(
+                    actor=scenario.actor,
+                    action={
+                        "type": proposed_action.type,
+                        "arguments": proposed_action.arguments,
+                    },
+                    ticket=entity,
+                )
+            else:
+                policy_decision = policy_engine.evaluate(
+                    actor=scenario.actor,
+                    action={
+                        "type": proposed_action.type,
+                        "arguments": proposed_action.arguments,
+                    },
+                )
 
             # If policy denies, don't execute — record and continue
             if not policy_decision.allowed:

@@ -1,7 +1,7 @@
-<section class="table-shell" aria-label="Performance comparison">
+<section class="table-shell" aria-label="Performance comparison — expense approval">
   <header class="table-header">
     <p class="eyebrow">Benchmark Results</p>
-    <h3>Performance Comparison — Expense Approval (test set, 4 scenarios)</h3>
+    <h3>Expense Approval (test set, 9 scenarios)</h3>
     <p class="results-link">
       Raw data: <a href="https://github.com/rmax-ai/enterprise-autoharness-lab/tree/main/docs/benchmarks" target="_blank" rel="noopener">docs/benchmarks/</a>
     </p>
@@ -15,6 +15,7 @@
         <th>Invalid Rate</th>
         <th>Policy Denial</th>
         <th>Composite Score</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -25,10 +26,11 @@
         <td>0.0%</td>
         <td>
           <div class="score-cell">
-            <span>−0.50</span>
+            <span>−0.500</span>
             <span class="bar"><span style="width: 0%"></span></span>
           </div>
         </td>
+        <td class="mono">180</td>
       </tr>
       <tr>
         <td><span class="condition-label">Noisy Agent</span> <span class="sub">+ manual harness</span></td>
@@ -37,10 +39,11 @@
         <td>0.0%</td>
         <td>
           <div class="score-cell">
-            <span>−0.50</span>
+            <span>−0.500</span>
             <span class="bar"><span style="width: 0%"></span></span>
           </div>
         </td>
+        <td class="mono">180</td>
       </tr>
       <tr class="generated">
         <td><span class="condition-label">Scripted Agent</span> <span class="sub">deterministic baseline</span></td>
@@ -49,19 +52,75 @@
         <td class="highlight">0.0%</td>
         <td class="highlight">
           <div class="score-cell">
-            <span>1.00</span>
+            <span>1.000</span>
             <span class="bar"><span style="width: 100%"></span></span>
           </div>
         </td>
+        <td class="mono highlight">9</td>
       </tr>
     </tbody>
   </table>
 
   <footer class="table-footer">
-    The noisy agent demonstrates the baseline chaos (100% invalid actions) that
-    motivates this project. The scripted agent represents a deterministic
-    oracle. AutoHarness bridges these two: synthesizing code that filters
-    invalid actions before they reach the environment.
+    The noisy agent produces 100% invalid actions — the baseline chaos that
+    motivates this project. The scripted oracle achieves 100% success.
+  </footer>
+</section>
+
+<section class="table-shell margin-top" aria-label="Performance comparison — support ticket">
+  <header class="table-header">
+    <p class="eyebrow">Benchmark Results</p>
+    <h3>Customer Support (test set, 9 scenarios)</h3>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Condition</th>
+        <th>Success Rate</th>
+        <th>Invalid Rate</th>
+        <th>Policy Denial</th>
+        <th>Composite Score</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="condition-label">Noisy Agent</span> <span class="sub">no harness</span></td>
+        <td class="mid">77.8%</td>
+        <td class="warn">19.1%</td>
+        <td class="warn">73.0%</td>
+        <td>
+          <div class="score-cell">
+            <span>0.609</span>
+            <span class="bar"><span style="width: 61%"></span></span>
+          </div>
+        </td>
+        <td class="mono">89</td>
+      </tr>
+      <tr class="generated">
+        <td><span class="condition-label">Noisy Agent</span> <span class="sub">+ manual harness</span></td>
+        <td class="mid">77.8%</td>
+        <td class="warn">19.1%</td>
+        <td class="warn">73.0%</td>
+        <td>
+          <div class="score-cell">
+            <span>0.609</span>
+            <span class="bar"><span style="width: 61%"></span></span>
+          </div>
+        </td>
+        <td class="mono">89</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <footer class="table-footer">
+    Unlike expense approval, the noise here hits a rich policy surface: 73% of
+    actions are denied by business rules (self-assignment, unauthorized refunds,
+    critical resolution without manager approval). The harness currently mirrors
+    the environment — same numbers — because the policy engine is the real
+    differentiator. The gap to close is between noisy policy violations and a
+    policy-aware harness.
   </footer>
 </section>
 
@@ -72,6 +131,10 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
+  }
+
+  .margin-top {
+    margin-top: 1.5rem;
   }
 
   .table-header {
@@ -161,6 +224,20 @@
   .bad {
     color: #f87171;
     font-weight: 600;
+  }
+
+  .warn {
+    color: #fbbf24;
+    font-weight: 600;
+  }
+
+  .mid {
+    color: var(--slate-300);
+    font-weight: 600;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
   }
 
   .condition-label {

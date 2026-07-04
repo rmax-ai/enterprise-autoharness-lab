@@ -142,3 +142,85 @@ class TestNoisyAgent:
         action2 = a2.propose_action("test", obs, ["submit_expense"])
         assert action1.type == action2.type
         assert action1.arguments == action2.arguments
+
+
+class TestScriptedAgentTickets:
+    def test_detects_ticket_domain(self):
+        agent = ScriptedAgent()
+        obs = {
+            "tickets": {
+                "tkt-1": {
+                    "ticket_id": "tkt-1",
+                    "state": "new",
+                    "priority": "high",
+                    "assignee": None,
+                    "customer": "acme",
+                }
+            }
+        }
+        action = agent.propose_action("test", obs, ["assign_ticket", "resolve_ticket"])
+        assert action.type == "assign_ticket"
+        assert action.arguments["assignee"] == "agent_bob"
+
+    def test_resolves_assigned_ticket(self):
+        agent = ScriptedAgent()
+        obs = {
+            "tickets": {
+                "tkt-1": {
+                    "ticket_id": "tkt-1",
+                    "state": "assigned",
+                    "priority": "medium",
+                    "assignee": "alice",
+                    "customer": "acme",
+                }
+            }
+        }
+        action = agent.propose_action("test", obs, ["assign_ticket", "resolve_ticket"])
+        assert action.type == "resolve_ticket"
+
+
+class TestNoisyAgentTickets:
+    def test_detects_ticket_domain(self):
+        agent = NoisyAgent(seed=42)
+        obs = {
+            "tickets": {
+                "tkt-1": {
+                    "ticket_id": "tkt-1",
+                    "state": "new",
+                    "priority": "high",
+                    "assignee": None,
+                    "customer": "acme",
+                }
+            }
+        }
+        action = agent.propose_action("test", obs, ["assign_ticket", "resolve_ticket"])
+        valid_types = {
+            "assign_ticket",
+            "set_priority",
+            "resolve_ticket",
+            "refund_customer",
+            "escalate_ticket",
+        }
+        assert action.type in valid_types
+
+    def test_wrong_type_in_ticket_domain(self):
+        agent = NoisyAgent(seed=42, wrong_type_rate=1.0)
+        obs = {"tickets": {}}
+        action = agent.propose_action("test", obs, ["assign_ticket"])
+        assert action.type == "invalid_action_type_xyz"
+
+    def test_missing_fields_in_ticket_domain(self):
+        agent = NoisyAgent(seed=42, missing_fields_rate=1.0, wrong_type_rate=0.0)
+        obs = {
+            "tickets": {
+                "tkt-1": {
+                    "ticket_id": "tkt-1",
+                    "state": "new",
+                    "priority": "high",
+                    "assignee": None,
+                    "customer": "acme",
+                }
+            }
+        }
+        action = agent.propose_action("test", obs, ["assign_ticket"])
+        assert action.arguments == {}

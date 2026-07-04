@@ -5,9 +5,8 @@ from pathlib import Path
 
 from autoharness_lab.agents.noisy import NoisyAgent
 from autoharness_lab.environments.expense_approval import ExpenseApprovalEnvironment
+from autoharness_lab.evaluation.runner import run_experiment
 from autoharness_lab.models import Action, Scenario
-from autoharness_lab.evaluation.runner import run_experiment, compute_all_metrics
-from autoharness_lab.harness.contracts import HarnessRuntime
 from autoharness_lab.policy.expense import ExpensePolicyEngine
 from autoharness_lab.storage.traces import TraceStore, classify_failure, extract_counterexamples
 
@@ -32,7 +31,7 @@ class TestAgentToEnvironmentFlow:
     def test_policy_engine_blocks_self_approval(self):
         """Policy engine denies self-approval even when environment would allow it."""
         env = ExpenseApprovalEnvironment()
-        obs = env.reset(42)
+        env.reset(42)
 
         # Add receipt to the submitted expense so policy allows approval
         snap = env.state_snapshot()
@@ -53,7 +52,9 @@ class TestAgentToEnvironmentFlow:
             action={"type": "approve_expense", "arguments": {"expense_id": submitted}},
             expense=expense,
         )
-        assert decision.allowed is True, f"Manager should be able to approve, got: {decision.reason}"
+        assert decision.allowed is True, (
+            f"Manager should be able to approve, got: {decision.reason}"
+        )
 
         # Self-approval — should be denied even though operationally valid
         decision2 = policy.evaluate(
@@ -67,7 +68,6 @@ class TestAgentToEnvironmentFlow:
 class TestTraceStorage:
     def test_jsonl_round_trip(self):
         """AttemptRecord → JSONL → AttemptRecord round-trip."""
-        import json
         from autoharness_lab.models import Action, AttemptRecord, ExecutionResult
 
         with tempfile.TemporaryDirectory() as tmpdir:

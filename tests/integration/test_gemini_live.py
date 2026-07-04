@@ -125,5 +125,6 @@ class TestGeminiLive:
             import warnings
             warnings.warn(
                 f"GeminiAgent approved own expense (stochastic): {action}. "
-                f"This is expected ~5-10% of the time and is why harnesses exist."
+                f"This is expected ~5-10% of the time and is why harnesses exist.",
+                stacklevel=2,
             )

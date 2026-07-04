@@ -1,11 +1,9 @@
 """Unit tests for metrics."""
 
 from autoharness_lab.evaluation.runner import (
-    compute_all_metrics,
     compute_composite_score,
     compute_false_acceptance_rate,
     compute_invalid_action_rate,
-    compute_policy_denial_rate,
     compute_task_success_rate,
 )
 from autoharness_lab.models import (
@@ -87,7 +85,7 @@ class TestCompositeScore:
     def test_reject_all_harness_scores_poorly(self):
         """A harness that rejects every action must score poorly."""
         records = []
-        for i in range(5):
+        for _i in range(5):
             records.append(_record("success", harness_accepted=False))
         # All actions would have succeeded but harness rejected them
         # Composite score should be poor due to false_rejection penalty

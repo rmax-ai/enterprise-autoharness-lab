@@ -3,7 +3,6 @@
 import pytest
 
 from autoharness_lab.environments.expense_approval import (
-    ExpenseApprovalConfig,
     ExpenseApprovalEnvironment,
 )
 from autoharness_lab.models import Action
@@ -48,9 +47,7 @@ def test_submit_draft_expense(env):
             break
     assert draft is not None
 
-    result = env.execute(
-        Action(type="submit_expense", arguments={"expense_id": draft})
-    )
+    result = env.execute(Action(type="submit_expense", arguments={"expense_id": draft}))
     assert result.status == "success"
     obs = env.state_snapshot()
     assert obs["expenses"][draft]["state"] == "submitted"
@@ -67,9 +64,7 @@ def test_submit_without_receipt_fails(env):
             break
 
     if draft:
-        result = env.execute(
-            Action(type="submit_expense", arguments={"expense_id": draft})
-        )
+        result = env.execute(Action(type="submit_expense", arguments={"expense_id": draft}))
         assert result.status == "invalid_action"
         assert result.error_code == "MISSING_RECEIPT"
 
@@ -83,9 +78,7 @@ def test_cannot_submit_already_submitted(env):
     )
     assert submitted is not None
 
-    result = env.execute(
-        Action(type="submit_expense", arguments={"expense_id": submitted})
-    )
+    result = env.execute(Action(type="submit_expense", arguments={"expense_id": submitted}))
     assert result.status == "invalid_action"
     assert result.error_code == "INVALID_STATE"
 
@@ -121,7 +114,6 @@ def test_missing_expense_id(env):
 
 def test_unsupported_currency(env):
     env.reset(42)
-    obs = env.state_snapshot()
     # The expenses from reset(42) all have EUR or USD
     # Test by checking config
     snap = env.state_snapshot()
