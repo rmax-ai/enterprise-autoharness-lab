@@ -48,9 +48,9 @@
     {
       icon: "🚀",
       title: "Software Deployment",
-      actions: "create, approve, start, rollback",
-      catches: ["production freezes", "unauthorized rollbacks"],
-      planned: true
+      actions: "create, approve, start, cancel, rollback",
+      catches: ["self-approvals", "production freezes", "unauthorized rollbacks"],
+      planned: false
     }
   ];
 </script>
@@ -83,8 +83,8 @@
       <span class="stat-label">Tests, all passing</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value">2</span>
-      <span class="stat-label">Environments (1 planned)</span>
+      <span class="stat-value">3</span>
+      <span class="stat-label">Environments, all ready</span>
     </div>
   </div>
 </section>

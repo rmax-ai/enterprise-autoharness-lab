@@ -13,6 +13,9 @@ from rich.table import Table
 from autoharness_lab.agents.gemini import GeminiAgent
 from autoharness_lab.agents.noisy import NoisyAgent
 from autoharness_lab.agents.scripted import ScriptedAgent
+from autoharness_lab.environments.deployment import (
+    DeploymentEnvironment,
+)
 from autoharness_lab.environments.expense_approval import (
     ExpenseApprovalEnvironment,
 )
@@ -25,6 +28,7 @@ from autoharness_lab.evaluation.runner import (
     run_experiment,
 )
 from autoharness_lab.harness.contracts import HarnessRuntime
+from autoharness_lab.policy.deployment import DeploymentPolicyEngine
 from autoharness_lab.policy.expense import ExpensePolicyEngine
 from autoharness_lab.policy.support import SupportPolicyEngine
 
@@ -43,6 +47,7 @@ def _get_environment(name: str):
     environments = {
         "expense-approval": lambda: ExpenseApprovalEnvironment(),
         "support-ticket": lambda: SupportTicketEnvironment(),
+        "deployment": lambda: DeploymentEnvironment(),
     }
     if name not in environments:
         console.print(f"[red]Unknown environment: {name}[/red]")
@@ -70,6 +75,7 @@ def _get_policy_engine(environment: str):
     engines = {
         "expense-approval": ExpensePolicyEngine,
         "support-ticket": SupportPolicyEngine,
+        "deployment": DeploymentPolicyEngine,
     }
     if environment not in engines:
         console.print(f"[red]Unknown environment for policy: {environment}[/red]")
@@ -86,6 +92,9 @@ def _load_harness_runtime(environment: str, version: str | None = None) -> Harne
             ),
             "support-ticket": (
                 REPO_ROOT / "src/autoharness_lab/harness/manual/support_ticket.py"
+            ),
+            "deployment": (
+                REPO_ROOT / "src/autoharness_lab/harness/manual/deployment.py"
             ),
         }
         harness_path = harness_paths.get(environment)
@@ -121,7 +130,7 @@ def list_environments():
         "✓ ready",
     )
     table.add_row("support-ticket", "assign, set_priority, resolve, refund, escalate", "✓ ready")
-    table.add_row("deployment", "create, approve, start, cancel, rollback", "⏳ planned")
+    table.add_row("deployment", "create, approve, start, cancel, rollback", "✓ ready")
 
     console.print(table)
 

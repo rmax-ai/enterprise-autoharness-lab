@@ -92,6 +92,8 @@ class NoisyAgent:
         # Detect domain from observation structure
         if "tickets" in observation:
             return self._propose_ticket_action(task, observation, available_actions)
+        if "deployments" in observation:
+            return self._propose_deployment_action(task, observation, available_actions)
         return self._propose_expense_action(task, observation, available_actions)
 
     def _propose_expense_action(
@@ -217,3 +219,84 @@ class NoisyAgent:
                     )
 
         return Action(type="assign_ticket", arguments={"ticket_id": "tkt-0001", "assignee": actor})
+
+    def _propose_deployment_action(
+        self,
+        task: str,
+        observation: dict[str, Any],
+        available_actions: list[str],
+    ) -> Action:
+        """Noisy software-deployment action proposal."""
+        deployments = observation.get("deployments", {})
+        actor = task.split("_")[0] if "_" in task else "noisy"
+
+        error_types = [
+            "create_deployment",
+            "approve_deployment",
+            "start_deployment",
+            "cancel_deployment",
+            "rollback_deployment",
+        ]
+
+        # ── Wrong action type ────────────────────────────────────
+        if self._rng.random() < self.wrong_type_rate:
+            return Action(
+                type="invalid_action_type_xyz",
+                arguments={"deployment_id": "dep-0001"},
+            )
+
+        # ── Missing fields ───────────────────────────────────────
+        if self._rng.random() < self.missing_fields_rate:
+            action_type = self._rng.choice(error_types)
+            return Action(type=action_type, arguments={})
+
+        # ── Operate on first available deployment ────────────────
+        for did, dep in deployments.items():
+            state = dep.get("state", "")
+
+            if state == "created":
+                if dep.get("checks_passed", False):
+                    # Self-approval?
+                    approver = (
+                        dep.get("creator", actor)
+                        if self._rng.random() < self.self_approval_rate
+                        else "manager_alex"
+                    )
+                    return Action(
+                        type="approve_deployment",
+                        arguments={"deployment_id": did, "approver": approver},
+                    )
+                return Action(
+                    type="cancel_deployment",
+                    arguments={"deployment_id": did},
+                )
+
+            if state == "approved":
+                return Action(
+                    type="start_deployment",
+                    arguments={"deployment_id": did},
+                )
+
+            if state == "started":
+                return Action(
+                    type="rollback_deployment",
+                    arguments={"deployment_id": did},
+                )
+
+        # ── Invalid state ────────────────────────────────────────
+        if self._rng.random() < self.invalid_state_rate:
+            for did, dep in deployments.items():
+                if dep.get("state") == "completed":
+                    return Action(
+                        type="cancel_deployment",
+                        arguments={"deployment_id": did},
+                    )
+
+        return Action(
+            type="create_deployment",
+            arguments={
+                "deployment_id": f"dep-{actor}-001",
+                "service": "unknown",
+                "environment": "staging",
+            },
+        )

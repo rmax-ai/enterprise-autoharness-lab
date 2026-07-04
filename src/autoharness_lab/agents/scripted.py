@@ -30,6 +30,8 @@ class ScriptedAgent:
         # Detect domain from observation structure
         if "tickets" in observation:
             return self._propose_ticket_action(task, observation, available_actions)
+        if "deployments" in observation:
+            return self._propose_deployment_action(task, observation, available_actions)
         return self._propose_expense_action(task, observation, available_actions)
 
     def _propose_expense_action(
@@ -105,3 +107,45 @@ class ScriptedAgent:
                 )
 
         return Action(type="resolve_ticket", arguments={"ticket_id": "none"})
+
+    def _propose_deployment_action(
+        self,
+        task: str,
+        observation: dict[str, Any],
+        available_actions: list[str],
+    ) -> Action:
+        """Software-deployment fixed policy."""
+        deployments = observation.get("deployments", {})
+
+        # Step 1: Approve created deployments (as different actor)
+        for did, dep in deployments.items():
+            if dep.get("state") == "created" and dep.get("checks_passed", False):
+                return Action(
+                    type="approve_deployment",
+                    arguments={"deployment_id": did, "approver": "manager_alex"},
+                )
+
+        # Step 2: Start approved deployments (skip production freeze)
+        for did, dep in deployments.items():
+            if dep.get("state") == "approved":
+                return Action(
+                    type="start_deployment",
+                    arguments={"deployment_id": did},
+                )
+
+        # Step 3: Cancel stale created deployments
+        for did, dep in deployments.items():
+            if dep.get("state") == "created" and not dep.get("checks_passed", False):
+                return Action(
+                    type="cancel_deployment",
+                    arguments={"deployment_id": did},
+                )
+
+        return Action(
+            type="create_deployment",
+            arguments={
+                "deployment_id": "none",
+                "service": "none",
+                "environment": "staging",
+            },
+        )

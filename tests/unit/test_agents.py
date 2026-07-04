@@ -224,3 +224,92 @@ class TestNoisyAgentTickets:
         }
         action = agent.propose_action("test", obs, ["assign_ticket"])
         assert action.arguments == {}
+
+
+class TestScriptedAgentDeployments:
+    def test_detects_deployment_domain(self):
+        agent = ScriptedAgent()
+        obs = {
+            "deployments": {
+                "dep-1": {
+                    "deployment_id": "dep-1",
+                    "state": "created",
+                    "checks_passed": True,
+                    "creator": "alice",
+                    "environment": "staging",
+                }
+            }
+        }
+        action = agent.propose_action(
+            "test", obs, ["approve_deployment", "start_deployment"]
+        )
+        assert action.type == "approve_deployment"
+        assert action.arguments["approver"] == "manager_alex"
+
+    def test_starts_approved_deployment(self):
+        agent = ScriptedAgent()
+        obs = {
+            "deployments": {
+                "dep-1": {
+                    "deployment_id": "dep-1",
+                    "state": "approved",
+                    "checks_passed": True,
+                    "creator": "alice",
+                    "environment": "staging",
+                }
+            }
+        }
+        action = agent.propose_action(
+            "test", obs, ["start_deployment", "cancel_deployment"]
+        )
+        assert action.type == "start_deployment"
+
+
+class TestNoisyAgentDeployments:
+    def test_detects_deployment_domain(self):
+        agent = NoisyAgent(seed=42)
+        obs = {
+            "deployments": {
+                "dep-1": {
+                    "deployment_id": "dep-1",
+                    "state": "created",
+                    "checks_passed": True,
+                    "creator": "alice",
+                    "environment": "staging",
+                }
+            }
+        }
+        action = agent.propose_action(
+            "test", obs, ["approve_deployment", "cancel_deployment"]
+        )
+        valid_types = {
+            "create_deployment",
+            "approve_deployment",
+            "start_deployment",
+            "cancel_deployment",
+            "rollback_deployment",
+        }
+        assert action.type in valid_types
+
+    def test_wrong_type_in_deployment_domain(self):
+        agent = NoisyAgent(seed=42, wrong_type_rate=1.0)
+        obs = {"deployments": {}}
+        action = agent.propose_action("test", obs, ["approve_deployment"])
+        assert action.type == "invalid_action_type_xyz"
+
+    def test_missing_fields_in_deployment_domain(self):
+        agent = NoisyAgent(
+            seed=42, missing_fields_rate=1.0, wrong_type_rate=0.0
+        )
+        obs = {
+            "deployments": {
+                "dep-1": {
+                    "deployment_id": "dep-1",
+                    "state": "created",
+                    "checks_passed": True,
+                    "creator": "alice",
+                }
+            }
+        }
+        action = agent.propose_action("test", obs, ["approve_deployment"])
+        assert action.arguments == {}

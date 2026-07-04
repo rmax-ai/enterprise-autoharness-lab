@@ -228,6 +228,17 @@ def run_experiment(
                     },
                     ticket=entity,
                 )
+            elif "deployments" in observation:
+                entity_id = proposed_action.arguments.get("deployment_id")
+                entity = observation.get("deployments", {}).get(entity_id)
+                policy_decision = policy_engine.evaluate(
+                    actor=scenario.actor,
+                    action={
+                        "type": proposed_action.type,
+                        "arguments": proposed_action.arguments,
+                    },
+                    deployment=entity,
+                )
             else:
                 policy_decision = policy_engine.evaluate(
                     actor=scenario.actor,
