@@ -214,10 +214,11 @@
   }
 
   h1 {
-    max-width: 12ch;
     margin: 0 auto 1.5rem;
-    font-size: clamp(3.5rem, 8vw, 5rem);
+    font-size: clamp(2.25rem, 7vw, 5rem);
     letter-spacing: -0.04em;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   h2 {
@@ -401,7 +402,7 @@
     }
 
     h1 {
-      font-size: clamp(3.5rem, 16vw, 4.25rem);
+      font-size: clamp(2rem, 10vw, 3rem);
     }
 
     .stat-card,

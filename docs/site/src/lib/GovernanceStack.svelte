@@ -188,12 +188,42 @@
   @media (max-width: 640px) {
     .stack {
       height: auto;
+      min-height: auto;
       grid-template-rows: auto 20px auto 20px auto;
       padding-block: 1rem;
     }
 
     .agent-shape {
       border-radius: 32px;
+      min-height: auto;
+      padding: 1.25rem 1rem;
+    }
+
+    .agent-shape strong,
+    .policy-card strong {
+      font-size: 1rem;
+    }
+
+    .code-card {
+      padding: 1rem 0.75rem;
+    }
+
+    .code-card pre {
+      font-size: 0.7rem;
+      line-height: 1.5;
+    }
+
+    .policy-card {
+      padding: 1rem;
+      gap: 0.75rem;
+    }
+
+    .lock {
+      font-size: 1.4rem;
+    }
+
+    .feedback-dot {
+      top: 30px;
     }
   }
 </style>
